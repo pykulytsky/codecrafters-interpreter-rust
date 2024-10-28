@@ -72,6 +72,14 @@ impl Token {
             literal: Some(literal),
         }
     }
+
+    pub fn identifier(s: String) -> Self {
+        Self {
+            kind: TokenKind::Identifier,
+            lexeme: s,
+            literal: None,
+        }
+    }
 }
 
 impl std::fmt::Debug for Token {
@@ -111,6 +119,7 @@ pub enum TokenKind {
     GreaterEqual,
     StringLiteral,
     NumberLiteral,
+    Identifier,
     Eof,
 }
 
@@ -138,6 +147,7 @@ impl std::fmt::Debug for TokenKind {
             Self::GreaterEqual => write!(f, "GREATER_EQUAL"),
             Self::StringLiteral => write!(f, "STRING"),
             Self::NumberLiteral => write!(f, "NUMBER"),
+            Self::Identifier => write!(f, "IDENTIFIER"),
             Self::Eof => write!(f, "EOF"),
         }
     }

@@ -80,7 +80,6 @@ impl Scanner {
                 }
                 ch if ch.is_ascii_digit() => {
                     if let Some(pos) = self.source.find(|ch| !is_number(ch)) {
-                        dbg!(&pos);
                         let (s, rest) = self.source.split_at(pos);
                         let mut s = s.to_string();
                         s.insert(0, ch);
@@ -90,6 +89,20 @@ impl Scanner {
                         let mut s = self.source.clone();
                         s.insert(0, ch);
                         self.tokens.push(Token::number_literal(s));
+                        self.source.clear()
+                    }
+                }
+                ch if is_alpha(ch) => {
+                    if let Some(pos) = self.source.find(|ch: char| !ch.is_alphanumeric()) {
+                        let (s, rest) = self.source.split_at(pos);
+                        let mut s = s.to_string();
+                        s.insert(0, ch);
+                        self.source = rest.to_string();
+                        self.tokens.push(Token::identifier(s));
+                    } else {
+                        let mut s = self.source.clone();
+                        s.insert(0, ch);
+                        self.tokens.push(Token::identifier(s));
                         self.source.clear()
                     }
                 }
@@ -106,4 +119,8 @@ impl Scanner {
 
 fn is_number(ch: char) -> bool {
     ch.is_ascii_digit() || ch == '.'
+}
+
+fn is_alpha(c: char) -> bool {
+    c.is_ascii_lowercase() || c.is_ascii_uppercase() || c == '_'
 }

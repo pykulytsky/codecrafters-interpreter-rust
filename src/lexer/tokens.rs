@@ -6,6 +6,19 @@ pub struct Token {
     pub literal: Option<String>,
 }
 
+macro_rules! new_token {
+    ($name:ident, $lex:literal, $kind:ident) => {
+        pub fn $name() -> Self {
+            Self {
+                kind: $kind,
+                lexeme: $lex.to_string(),
+                literal: None,
+            }
+        }
+    };
+}
+
+use TokenKind::*;
 impl Token {
     pub const EOF: Self = Self {
         kind: TokenKind::Eof,
@@ -13,125 +26,25 @@ impl Token {
         literal: None,
     };
 
-    pub fn new_left_paren() -> Self {
-        Self {
-            kind: TokenKind::LeftParen,
-            lexeme: "(".to_string(),
-            literal: None,
-        }
-    }
-
-    pub fn new_right_paren() -> Self {
-        Self {
-            kind: TokenKind::RightParen,
-            lexeme: ")".to_string(),
-            literal: None,
-        }
-    }
-
-    pub fn new_left_brace() -> Self {
-        Self {
-            kind: TokenKind::LeftBrace,
-            lexeme: "{".to_string(),
-            literal: None,
-        }
-    }
-
-    pub fn new_right_brace() -> Self {
-        Self {
-            kind: TokenKind::RightBrace,
-            lexeme: "}".to_string(),
-            literal: None,
-        }
-    }
-
-    pub fn new_comma() -> Self {
-        Self {
-            kind: TokenKind::Comma,
-            lexeme: ",".to_string(),
-            literal: None,
-        }
-    }
-
-    pub fn new_dot() -> Self {
-        Self {
-            kind: TokenKind::Dot,
-            lexeme: ".".to_string(),
-            literal: None,
-        }
-    }
-
-    pub fn new_star() -> Self {
-        Self {
-            kind: TokenKind::Star,
-            lexeme: "*".to_string(),
-            literal: None,
-        }
-    }
-
-    pub fn new_plus() -> Self {
-        Self {
-            kind: TokenKind::Plus,
-            lexeme: "+".to_string(),
-            literal: None,
-        }
-    }
-
-    pub fn new_minus() -> Self {
-        Self {
-            kind: TokenKind::Minus,
-            lexeme: "-".to_string(),
-            literal: None,
-        }
-    }
-
-    pub fn new_semicolon() -> Self {
-        Self {
-            kind: TokenKind::Semicolon,
-            lexeme: ";".to_string(),
-            literal: None,
-        }
-    }
-
-    pub fn new_slash() -> Self {
-        Self {
-            kind: TokenKind::Slash,
-            lexeme: "/".to_string(),
-            literal: None,
-        }
-    }
-
-    pub fn new_equal() -> Self {
-        Self {
-            kind: TokenKind::Equal,
-            lexeme: "=".to_string(),
-            literal: None,
-        }
-    }
-
-    pub fn new_equal_equal() -> Self {
-        Self {
-            kind: TokenKind::EqualEqual,
-            lexeme: "==".to_string(),
-            literal: None,
-        }
-    }
-
-    pub fn new_bang() -> Self {
-        Self {
-            kind: TokenKind::Bang,
-            lexeme: "!".to_string(),
-            literal: None,
-        }
-    }
-
-    pub fn new_bang_equal() -> Self {
-        Self {
-            kind: TokenKind::BangEqual,
-            lexeme: "!=".to_string(),
-            literal: None,
-        }
-    }
+    new_token!(left_paren, "(", LeftParen);
+    new_token!(right_paren, ")", RightParen);
+    new_token!(left_brace, "{", LeftBrace);
+    new_token!(right_brace, "}", RightBrace);
+    new_token!(comma, ",", Comma);
+    new_token!(dot, ".", Dot);
+    new_token!(star, "*", Star);
+    new_token!(plus, "+", Plus);
+    new_token!(minus, "-", Minus);
+    new_token!(semicolon, ";", Semicolon);
+    new_token!(slash, "/", Slash);
+    new_token!(equal, "=", Equal);
+    new_token!(equal_equal, "==", EqualEqual);
+    new_token!(bang, "!", Bang);
+    new_token!(bang_equal, "!=", BangEqual);
+    new_token!(less, "<", Less);
+    new_token!(less_equal, "<=", LessEqual);
+    new_token!(greater, ">", Greater);
+    new_token!(greater_equal, ">=", GreaterEqual);
 }
 
 impl std::fmt::Debug for Token {
@@ -165,6 +78,10 @@ pub enum TokenKind {
     EqualEqual,
     Bang,
     BangEqual,
+    Less,
+    LessEqual,
+    Greater,
+    GreaterEqual,
     Eof,
 }
 
@@ -186,6 +103,10 @@ impl std::fmt::Debug for TokenKind {
             Self::EqualEqual => write!(f, "EQUAL_EQUAL"),
             Self::Bang => write!(f, "BANG"),
             Self::BangEqual => write!(f, "BANG_EQUAL"),
+            Self::Less => write!(f, "LESS"),
+            Self::LessEqual => write!(f, "LESS_EQUAL"),
+            Self::Greater => write!(f, "GREATER"),
+            Self::GreaterEqual => write!(f, "GREATER_EQUAL"),
             Self::Eof => write!(f, "EOF"),
         }
     }

@@ -20,27 +20,38 @@ impl Scanner {
         while !self.source.is_empty() {
             let ch = self.source.remove(0);
             match ch {
-                '(' => self.tokens.push(Token::new_left_paren()),
-                ')' => self.tokens.push(Token::new_right_paren()),
-                '{' => self.tokens.push(Token::new_left_brace()),
-                '}' => self.tokens.push(Token::new_right_brace()),
-                '*' => self.tokens.push(Token::new_star()),
-                '.' => self.tokens.push(Token::new_dot()),
-                ',' => self.tokens.push(Token::new_comma()),
-                '+' => self.tokens.push(Token::new_plus()),
-                '-' => self.tokens.push(Token::new_minus()),
-                ';' => self.tokens.push(Token::new_semicolon()),
-                '/' => self.tokens.push(Token::new_slash()), // TODO: handle comments
+                '(' => self.tokens.push(Token::left_paren()),
+                ')' => self.tokens.push(Token::right_paren()),
+                '{' => self.tokens.push(Token::left_brace()),
+                '}' => self.tokens.push(Token::right_brace()),
+                '*' => self.tokens.push(Token::star()),
+                '.' => self.tokens.push(Token::dot()),
+                ',' => self.tokens.push(Token::comma()),
+                '+' => self.tokens.push(Token::plus()),
+                '-' => self.tokens.push(Token::minus()),
+                ';' => self.tokens.push(Token::semicolon()),
+                '/' => self.tokens.push(Token::slash()), // TODO: handle comments
                 '=' if self.source.starts_with("=") => {
                     self.source.remove(0);
-                    self.tokens.push(Token::new_equal_equal())
+                    self.tokens.push(Token::equal_equal())
                 }
-                '=' => self.tokens.push(Token::new_equal()),
+                '=' => self.tokens.push(Token::equal()),
                 '!' if self.source.starts_with("=") => {
                     self.source.remove(0);
-                    self.tokens.push(Token::new_bang_equal())
+                    self.tokens.push(Token::bang_equal())
                 }
-                '!' => self.tokens.push(Token::new_bang()),
+                '!' => self.tokens.push(Token::bang()),
+
+                '>' if self.source.starts_with("=") => {
+                    self.source.remove(0);
+                    self.tokens.push(Token::greater_equal())
+                }
+                '>' => self.tokens.push(Token::greater()),
+                '<' if self.source.starts_with("=") => {
+                    self.source.remove(0);
+                    self.tokens.push(Token::less_equal())
+                }
+                '<' => self.tokens.push(Token::less()),
                 '\n' => {
                     line += 1;
                 }

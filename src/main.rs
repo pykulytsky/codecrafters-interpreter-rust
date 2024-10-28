@@ -1,24 +1,21 @@
 use clap::Parser;
 use cli::*;
-use std::fs;
+use lexer::Scanner;
 
 mod cli;
 mod lexer;
 
-fn main() {
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = Args::parse();
     match args.command {
         Commands::Tokenize { filename } => {
-            let file_contents = fs::read_to_string(&filename).unwrap_or_else(|_| {
-                eprintln!("Failed to read file {}", &filename);
-                String::new()
-            });
-
-            if !file_contents.is_empty() {
-                panic!("Scanner not implemented");
-            } else {
-                println!("EOF  null"); // Placeholder, remove this line when implementing the scanner
+            let mut scanner = Scanner::new(&filename).await?;
+            scanner.parse_sourse();
+            for token in scanner.tokens {
+                println!("{:?}", token);
             }
         }
     }
+    Ok(())
 }

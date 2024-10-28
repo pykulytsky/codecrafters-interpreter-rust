@@ -31,6 +31,11 @@ impl Scanner {
                 '-' => self.tokens.push(Token::new_minus()),
                 ';' => self.tokens.push(Token::new_semicolon()),
                 '/' => self.tokens.push(Token::new_slash()), // TODO: handle comments
+                '=' if self.source.starts_with("=") => {
+                    self.source.remove(0);
+                    self.tokens.push(Token::new_equal_equal())
+                }
+                '=' => self.tokens.push(Token::new_equal()), // TODO: handle comments
                 '\n' => {
                     line += 1;
                 }

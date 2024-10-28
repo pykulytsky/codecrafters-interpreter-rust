@@ -100,6 +100,22 @@ impl Token {
             literal: None,
         }
     }
+
+    pub fn new_equal() -> Self {
+        Self {
+            kind: TokenKind::Equal,
+            lexeme: "=".to_string(),
+            literal: None,
+        }
+    }
+
+    pub fn new_equal_equal() -> Self {
+        Self {
+            kind: TokenKind::EqualEqual,
+            lexeme: "==".to_string(),
+            literal: None,
+        }
+    }
 }
 
 impl std::fmt::Debug for Token {
@@ -129,6 +145,8 @@ pub enum TokenKind {
     Minus,
     Semicolon,
     Slash,
+    Equal,
+    EqualEqual,
     Eof,
 }
 
@@ -146,6 +164,8 @@ impl std::fmt::Debug for TokenKind {
             Self::Minus => write!(f, "MINUS"),
             Self::Semicolon => write!(f, "SEMICOLON"),
             Self::Slash => write!(f, "SLASH"),
+            Self::Equal => write!(f, "EQUAL"),
+            Self::EqualEqual => write!(f, "EQUAL_EQUAL"),
             Self::Eof => write!(f, "EOF"),
         }
     }

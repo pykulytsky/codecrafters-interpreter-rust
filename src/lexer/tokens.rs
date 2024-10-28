@@ -46,7 +46,7 @@ impl Token {
     new_token!(greater, ">", Greater);
     new_token!(greater_equal, ">=", GreaterEqual);
 
-    pub fn new_string(s: String) -> Self {
+    pub fn string_literal(s: String) -> Self {
         Self {
             kind: TokenKind::StringLiteral,
             lexeme: s.clone(),
@@ -56,6 +56,20 @@ impl Token {
                     .unwrap()
                     .to_string(),
             ),
+        }
+    }
+
+    pub fn number_literal(s: String) -> Self {
+        let mut literal = s.clone();
+        if !literal.contains('.') {
+            literal += ".0";
+        } else if let Some(zero_pos) = literal.find(".0") {
+            literal = literal[..zero_pos + 2].to_string();
+        }
+        Self {
+            kind: TokenKind::NumberLiteral,
+            lexeme: s,
+            literal: Some(literal),
         }
     }
 }
@@ -96,6 +110,7 @@ pub enum TokenKind {
     Greater,
     GreaterEqual,
     StringLiteral,
+    NumberLiteral,
     Eof,
 }
 
@@ -122,6 +137,7 @@ impl std::fmt::Debug for TokenKind {
             Self::Greater => write!(f, "GREATER"),
             Self::GreaterEqual => write!(f, "GREATER_EQUAL"),
             Self::StringLiteral => write!(f, "STRING"),
+            Self::NumberLiteral => write!(f, "NUMBER"),
             Self::Eof => write!(f, "EOF"),
         }
     }

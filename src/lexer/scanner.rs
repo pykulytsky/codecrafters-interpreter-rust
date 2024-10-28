@@ -66,7 +66,7 @@ impl Scanner {
                         let mut s = s.to_string();
                         s.insert(0, '"');
                         self.source = rest.to_string();
-                        self.tokens.push(Token::new_string(s));
+                        self.tokens.push(Token::string_literal(s));
                     } else {
                         self.source.clear();
                         res = Err(LexerError::UnterminatedString(line));
@@ -78,6 +78,21 @@ impl Scanner {
                         line += 1;
                     }
                 }
+                ch if ch.is_ascii_digit() => {
+                    if let Some(pos) = self.source.find(|ch| !is_number(ch)) {
+                        dbg!(&pos);
+                        let (s, rest) = self.source.split_at(pos);
+                        let mut s = s.to_string();
+                        s.insert(0, ch);
+                        self.source = rest.to_string();
+                        self.tokens.push(Token::number_literal(s));
+                    } else {
+                        let mut s = self.source.clone();
+                        s.insert(0, ch);
+                        self.tokens.push(Token::number_literal(s));
+                        self.source.clear()
+                    }
+                }
                 _ => {
                     res = Err(LexerError::UnexpectedCharacter { line, ch });
                     eprintln!("[line {line}] Error: Unexpected character: {}", ch)
@@ -87,4 +102,8 @@ impl Scanner {
         self.tokens.push(Token::EOF);
         res
     }
+}
+
+fn is_number(ch: char) -> bool {
+    ch.is_ascii_digit() || ch == '.'
 }

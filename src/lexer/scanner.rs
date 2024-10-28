@@ -30,7 +30,14 @@ impl Scanner {
                 '+' => self.tokens.push(Token::plus()),
                 '-' => self.tokens.push(Token::minus()),
                 ';' => self.tokens.push(Token::semicolon()),
-                '/' => self.tokens.push(Token::slash()), // TODO: handle comments
+                '/' if self.source.starts_with("/") => {
+                    if let Some(pos) = self.source.find('\n') {
+                        self.source = self.source[pos + 1..].to_string();
+                    } else {
+                        self.source.clear();
+                    }
+                }
+                '/' => self.tokens.push(Token::slash()),
                 '=' if self.source.starts_with("=") => {
                     self.source.remove(0);
                     self.tokens.push(Token::equal_equal())

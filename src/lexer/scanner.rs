@@ -33,6 +33,7 @@ impl Scanner {
                 '/' if self.source.starts_with("/") => {
                     if let Some(pos) = self.source.find('\n') {
                         self.source = self.source[pos + 1..].to_string();
+                        line += 1;
                     } else {
                         self.source.clear();
                     }

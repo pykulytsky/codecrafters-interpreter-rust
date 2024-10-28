@@ -116,6 +116,22 @@ impl Token {
             literal: None,
         }
     }
+
+    pub fn new_bang() -> Self {
+        Self {
+            kind: TokenKind::Bang,
+            lexeme: "!".to_string(),
+            literal: None,
+        }
+    }
+
+    pub fn new_bang_equal() -> Self {
+        Self {
+            kind: TokenKind::BangEqual,
+            lexeme: "!=".to_string(),
+            literal: None,
+        }
+    }
 }
 
 impl std::fmt::Debug for Token {
@@ -147,6 +163,8 @@ pub enum TokenKind {
     Slash,
     Equal,
     EqualEqual,
+    Bang,
+    BangEqual,
     Eof,
 }
 
@@ -166,6 +184,8 @@ impl std::fmt::Debug for TokenKind {
             Self::Slash => write!(f, "SLASH"),
             Self::Equal => write!(f, "EQUAL"),
             Self::EqualEqual => write!(f, "EQUAL_EQUAL"),
+            Self::Bang => write!(f, "BANG"),
+            Self::BangEqual => write!(f, "BANG_EQUAL"),
             Self::Eof => write!(f, "EOF"),
         }
     }

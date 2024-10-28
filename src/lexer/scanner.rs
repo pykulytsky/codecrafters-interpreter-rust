@@ -35,7 +35,12 @@ impl Scanner {
                     self.source.remove(0);
                     self.tokens.push(Token::new_equal_equal())
                 }
-                '=' => self.tokens.push(Token::new_equal()), // TODO: handle comments
+                '=' => self.tokens.push(Token::new_equal()),
+                '!' if self.source.starts_with("=") => {
+                    self.source.remove(0);
+                    self.tokens.push(Token::new_bang_equal())
+                }
+                '!' => self.tokens.push(Token::new_bang()),
                 '\n' => {
                     line += 1;
                 }

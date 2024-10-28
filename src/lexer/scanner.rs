@@ -1,4 +1,4 @@
-use crate::lexer::{LexerError, LexerResult, Token};
+use crate::lexer::{tokens::RESERVED_WORDS, LexerError, LexerResult, Token};
 
 #[derive(Debug)]
 pub struct Scanner {
@@ -101,11 +101,19 @@ impl Scanner {
                         let mut s = s.to_string();
                         s.insert(0, ch);
                         self.source = rest.to_string();
-                        self.tokens.push(Token::identifier(s));
+                        if RESERVED_WORDS.contains(&s.as_str()) {
+                            self.tokens.push(Token::reserved(s));
+                        } else {
+                            self.tokens.push(Token::identifier(s));
+                        }
                     } else {
                         let mut s = self.source.clone();
                         s.insert(0, ch);
-                        self.tokens.push(Token::identifier(s));
+                        if RESERVED_WORDS.contains(&s.as_str()) {
+                            self.tokens.push(Token::reserved(s));
+                        } else {
+                            self.tokens.push(Token::identifier(s));
+                        }
                         self.source.clear()
                     }
                 }

@@ -1,5 +1,10 @@
 #![allow(dead_code, unused)]
 
+pub const RESERVED_WORDS: &[&str] = &[
+    "and", "class", "else", "false", "for", "fun", "if", "nil", "or", "print", "return", "super",
+    "this", "true", "var", "while",
+];
+
 pub struct Token {
     pub kind: TokenKind,
     pub lexeme: String,
@@ -84,6 +89,33 @@ impl Token {
             literal: None,
         }
     }
+
+    pub fn reserved(s: String) -> Self {
+        let kind = match s.as_str() {
+            "and" => AND,
+            "class" => CLASS,
+            "else" => ELSE,
+            "false" => FALSE,
+            "for" => FOR,
+            "fun" => FUN,
+            "if" => IF,
+            "nil" => NIL,
+            "or" => OR,
+            "print" => PRINT,
+            "return" => RETURN,
+            "super" => SUPER,
+            "this" => THIS,
+            "true" => TRUE,
+            "var" => VAR,
+            "while" => WHILE,
+            _ => unreachable!("Unsupported reserved word"),
+        };
+        Self {
+            kind,
+            lexeme: s,
+            literal: None,
+        }
+    }
 }
 
 impl std::fmt::Debug for Token {
@@ -100,7 +132,7 @@ impl std::fmt::Debug for Token {
         )
     }
 }
-
+#[allow(clippy::upper_case_acronyms)]
 pub enum TokenKind {
     LeftParen,
     RightParen,
@@ -124,35 +156,67 @@ pub enum TokenKind {
     StringLiteral,
     NumberLiteral,
     Identifier,
+    AND,
+    CLASS,
+    ELSE,
+    FALSE,
+    FOR,
+    FUN,
+    IF,
+    NIL,
+    OR,
+    PRINT,
+    RETURN,
+    SUPER,
+    THIS,
+    TRUE,
+    VAR,
+    WHILE,
     Eof,
 }
 
 impl std::fmt::Debug for TokenKind {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::LeftParen => write!(f, "LEFT_PAREN"),
-            Self::RightParen => write!(f, "RIGHT_PAREN"),
-            Self::LeftBrace => write!(f, "LEFT_BRACE"),
-            Self::RightBrace => write!(f, "RIGHT_BRACE"),
-            Self::Star => write!(f, "STAR"),
-            Self::Dot => write!(f, "DOT"),
-            Self::Comma => write!(f, "COMMA"),
-            Self::Plus => write!(f, "PLUS"),
-            Self::Minus => write!(f, "MINUS"),
-            Self::Semicolon => write!(f, "SEMICOLON"),
-            Self::Slash => write!(f, "SLASH"),
-            Self::Equal => write!(f, "EQUAL"),
-            Self::EqualEqual => write!(f, "EQUAL_EQUAL"),
-            Self::Bang => write!(f, "BANG"),
-            Self::BangEqual => write!(f, "BANG_EQUAL"),
-            Self::Less => write!(f, "LESS"),
-            Self::LessEqual => write!(f, "LESS_EQUAL"),
-            Self::Greater => write!(f, "GREATER"),
-            Self::GreaterEqual => write!(f, "GREATER_EQUAL"),
-            Self::StringLiteral => write!(f, "STRING"),
-            Self::NumberLiteral => write!(f, "NUMBER"),
-            Self::Identifier => write!(f, "IDENTIFIER"),
-            Self::Eof => write!(f, "EOF"),
+            LeftParen => write!(f, "LEFT_PAREN"),
+            RightParen => write!(f, "RIGHT_PAREN"),
+            LeftBrace => write!(f, "LEFT_BRACE"),
+            RightBrace => write!(f, "RIGHT_BRACE"),
+            Star => write!(f, "STAR"),
+            Dot => write!(f, "DOT"),
+            Comma => write!(f, "COMMA"),
+            Plus => write!(f, "PLUS"),
+            Minus => write!(f, "MINUS"),
+            Semicolon => write!(f, "SEMICOLON"),
+            Slash => write!(f, "SLASH"),
+            Equal => write!(f, "EQUAL"),
+            EqualEqual => write!(f, "EQUAL_EQUAL"),
+            Bang => write!(f, "BANG"),
+            BangEqual => write!(f, "BANG_EQUAL"),
+            Less => write!(f, "LESS"),
+            LessEqual => write!(f, "LESS_EQUAL"),
+            Greater => write!(f, "GREATER"),
+            GreaterEqual => write!(f, "GREATER_EQUAL"),
+            StringLiteral => write!(f, "STRING"),
+            NumberLiteral => write!(f, "NUMBER"),
+            Identifier => write!(f, "IDENTIFIER"),
+            Eof => write!(f, "EOF"),
+            AND => write!(f, "AND"),
+            CLASS => write!(f, "CLASS"),
+            ELSE => write!(f, "ELSE"),
+            FALSE => write!(f, "FALSE"),
+            FOR => write!(f, "FOR"),
+            FUN => write!(f, "FUN"),
+            IF => write!(f, "IF"),
+            NIL => write!(f, "NIL"),
+            OR => write!(f, "OR"),
+            PRINT => write!(f, "PRINT"),
+            RETURN => write!(f, "RETURN"),
+            SUPER => write!(f, "SUPER"),
+            THIS => write!(f, "THIS"),
+            TRUE => write!(f, "TRUE"),
+            VAR => write!(f, "VAR"),
+            WHILE => write!(f, "WHILE"),
         }
     }
 }

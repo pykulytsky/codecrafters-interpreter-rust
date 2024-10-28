@@ -44,6 +44,62 @@ impl Token {
             literal: None,
         }
     }
+
+    pub fn new_comma() -> Self {
+        Self {
+            kind: TokenKind::Comma,
+            lexeme: ",".to_string(),
+            literal: None,
+        }
+    }
+
+    pub fn new_dot() -> Self {
+        Self {
+            kind: TokenKind::Dot,
+            lexeme: ".".to_string(),
+            literal: None,
+        }
+    }
+
+    pub fn new_star() -> Self {
+        Self {
+            kind: TokenKind::Star,
+            lexeme: "*".to_string(),
+            literal: None,
+        }
+    }
+
+    pub fn new_plus() -> Self {
+        Self {
+            kind: TokenKind::Plus,
+            lexeme: "+".to_string(),
+            literal: None,
+        }
+    }
+
+    pub fn new_minus() -> Self {
+        Self {
+            kind: TokenKind::Minus,
+            lexeme: "-".to_string(),
+            literal: None,
+        }
+    }
+
+    pub fn new_semicolon() -> Self {
+        Self {
+            kind: TokenKind::Semicolon,
+            lexeme: ";".to_string(),
+            literal: None,
+        }
+    }
+
+    pub fn new_slash() -> Self {
+        Self {
+            kind: TokenKind::Slash,
+            lexeme: "/".to_string(),
+            literal: None,
+        }
+    }
 }
 
 impl std::fmt::Debug for Token {
@@ -66,6 +122,13 @@ pub enum TokenKind {
     RightParen,
     LeftBrace,
     RightBrace,
+    Star,
+    Dot,
+    Comma,
+    Plus,
+    Minus,
+    Semicolon,
+    Slash,
     Eof,
 }
 
@@ -76,6 +139,13 @@ impl std::fmt::Debug for TokenKind {
             Self::RightParen => write!(f, "RIGHT_PAREN"),
             Self::LeftBrace => write!(f, "LEFT_BRACE"),
             Self::RightBrace => write!(f, "RIGHT_BRACE"),
+            Self::Star => write!(f, "STAR"),
+            Self::Dot => write!(f, "DOT"),
+            Self::Comma => write!(f, "COMMA"),
+            Self::Plus => write!(f, "PLUS"),
+            Self::Minus => write!(f, "MINUS"),
+            Self::Semicolon => write!(f, "SEMICOLON"),
+            Self::Slash => write!(f, "SLASH"),
             Self::Eof => write!(f, "EOF"),
         }
     }

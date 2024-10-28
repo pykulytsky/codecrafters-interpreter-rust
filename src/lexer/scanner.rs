@@ -22,8 +22,15 @@ impl Scanner {
                 ')' => self.tokens.push(Token::new_right_paren()),
                 '{' => self.tokens.push(Token::new_left_brace()),
                 '}' => self.tokens.push(Token::new_right_brace()),
+                '*' => self.tokens.push(Token::new_star()),
+                '.' => self.tokens.push(Token::new_dot()),
+                ',' => self.tokens.push(Token::new_comma()),
+                '+' => self.tokens.push(Token::new_plus()),
+                '-' => self.tokens.push(Token::new_minus()),
+                ';' => self.tokens.push(Token::new_semicolon()),
+                '/' => self.tokens.push(Token::new_slash()), // TODO: handle comments
                 '\n' => {}
-                _ => todo!("Unexpected token, {}", ch),
+                _ => todo!("Unexpected token: {}", ch),
             }
         }
         self.tokens.push(Token::EOF);

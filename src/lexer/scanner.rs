@@ -93,7 +93,10 @@ impl Scanner {
                     }
                 }
                 ch if is_alpha(ch) => {
-                    if let Some(pos) = self.source.find(|ch: char| !ch.is_alphanumeric()) {
+                    if let Some(pos) = self
+                        .source
+                        .find(|ch: char| !is_alpha(ch) && !ch.is_alphanumeric())
+                    {
                         let (s, rest) = self.source.split_at(pos);
                         let mut s = s.to_string();
                         s.insert(0, ch);

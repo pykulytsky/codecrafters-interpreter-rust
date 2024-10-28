@@ -63,8 +63,12 @@ impl Token {
         let mut literal = s.clone();
         if !literal.contains('.') {
             literal += ".0";
-        } else if let Some(zero_pos) = literal.find(".0") {
-            literal = literal[..zero_pos + 2].to_string();
+        } else if let Some(zero_pos) = literal.find(".") {
+            literal = literal.trim_end_matches('0').to_string();
+
+            if literal.ends_with('.') {
+                literal += "0";
+            }
         }
         Self {
             kind: TokenKind::NumberLiteral,

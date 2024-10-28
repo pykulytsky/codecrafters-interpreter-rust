@@ -60,6 +60,19 @@ impl Scanner {
                     self.tokens.push(Token::less_equal())
                 }
                 '<' => self.tokens.push(Token::less()),
+                '"' => {
+                    if let Some(pos) = self.source.find('"') {
+                        let (s, rest) = self.source.split_at(pos + 1);
+                        let mut s = s.to_string();
+                        s.insert(0, '"');
+                        self.source = rest.to_string();
+                        self.tokens.push(Token::new_string(s));
+                    } else {
+                        self.source.clear();
+                        res = Err(LexerError::UnterminatedString(line));
+                        eprintln!("[line {line}] Error: Unterminated string.")
+                    }
+                }
                 ch if ch.is_whitespace() => {
                     if ch == '\n' {
                         line += 1;

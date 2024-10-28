@@ -45,6 +45,19 @@ impl Token {
     new_token!(less_equal, "<=", LessEqual);
     new_token!(greater, ">", Greater);
     new_token!(greater_equal, ">=", GreaterEqual);
+
+    pub fn new_string(s: String) -> Self {
+        Self {
+            kind: TokenKind::StringLiteral,
+            lexeme: s.clone(),
+            literal: Some(
+                s.strip_prefix('"')
+                    .and_then(|s| s.strip_suffix('"'))
+                    .unwrap()
+                    .to_string(),
+            ),
+        }
+    }
 }
 
 impl std::fmt::Debug for Token {
@@ -82,6 +95,7 @@ pub enum TokenKind {
     LessEqual,
     Greater,
     GreaterEqual,
+    StringLiteral,
     Eof,
 }
 
@@ -107,6 +121,7 @@ impl std::fmt::Debug for TokenKind {
             Self::LessEqual => write!(f, "LESS_EQUAL"),
             Self::Greater => write!(f, "GREATER"),
             Self::GreaterEqual => write!(f, "GREATER_EQUAL"),
+            Self::StringLiteral => write!(f, "STRING"),
             Self::Eof => write!(f, "EOF"),
         }
     }

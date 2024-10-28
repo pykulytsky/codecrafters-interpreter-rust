@@ -7,6 +7,9 @@ pub enum LexerError {
 
     #[error("[line {line}] Error: Unexpected character: {ch}")]
     UnexpectedCharacter { line: usize, ch: char },
+
+    #[error("[line {_0}] Error: Unterminated string.")]
+    UnterminatedString(usize),
 }
 
 pub type LexerResult<T> = std::result::Result<T, LexerError>;

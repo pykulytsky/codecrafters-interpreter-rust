@@ -59,8 +59,10 @@ impl Scanner {
                     self.tokens.push(Token::less_equal())
                 }
                 '<' => self.tokens.push(Token::less()),
-                '\n' => {
-                    line += 1;
+                ch if ch.is_whitespace() => {
+                    if ch == '\n' {
+                        line += 1;
+                    }
                 }
                 _ => {
                     res = Err(LexerError::UnexpectedCharacter { line, ch });

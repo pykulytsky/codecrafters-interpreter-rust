@@ -1,4 +1,4 @@
-use crate::lexer::{LexerResult, Token};
+use crate::lexer::{LexerError, LexerResult, Token};
 
 #[derive(Debug)]
 pub struct Scanner {
@@ -14,7 +14,9 @@ impl Scanner {
             tokens: vec![],
         })
     }
-    pub fn parse_sourse(&mut self) {
+    pub fn parse_sourse(&mut self) -> LexerResult<()> {
+        let mut line = 1;
+        let mut res = Ok(());
         while !self.source.is_empty() {
             let ch = self.source.remove(0);
             match ch {
@@ -29,10 +31,16 @@ impl Scanner {
                 '-' => self.tokens.push(Token::new_minus()),
                 ';' => self.tokens.push(Token::new_semicolon()),
                 '/' => self.tokens.push(Token::new_slash()), // TODO: handle comments
-                '\n' => {}
-                _ => todo!("Unexpected token: {}", ch),
+                '\n' => {
+                    line += 1;
+                }
+                _ => {
+                    res = Err(LexerError::UnexpectedCharacter { line, ch });
+                    eprintln!("[line {line}] Error: Unexpected character: {}", ch)
+                }
             }
         }
         self.tokens.push(Token::EOF);
+        res
     }
 }

@@ -1,3 +1,5 @@
+use std::process::exit;
+
 use clap::Parser;
 use cli::*;
 use lexer::Scanner;
@@ -11,9 +13,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     match args.command {
         Commands::Tokenize { filename } => {
             let mut scanner = Scanner::new(&filename).await?;
-            scanner.parse_sourse();
+            let res = scanner.parse_sourse();
             for token in scanner.tokens {
                 println!("{:?}", token);
+            }
+            if res.is_err() {
+                exit(65);
             }
         }
     }

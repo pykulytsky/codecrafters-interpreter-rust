@@ -95,7 +95,6 @@ impl Iterator for Lexer {
                 if let Some(pos) = self.source[self.cursor..].find('\n') {
                     self.cursor += pos + 1;
                     self.current_line += 1;
-                    dbg!(&self.source[self.cursor..]);
                     self.next()
                 } else {
                     self.cursor = self.source.len();

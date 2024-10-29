@@ -1,6 +1,6 @@
 #![allow(dead_code, unused)]
 
-use crate::lexer::{Lexer, Token, RESERVED_WORDS};
+use crate::lexer::{Lexer, Token, TokenKind, RESERVED_WORDS};
 pub use expr::Expr;
 pub use literal::Literal;
 
@@ -44,8 +44,30 @@ impl Iterator for Parser {
             FALSE => Some(Expr::Literal(Literal::Logical(false))),
             NumberLiteral => Some(Expr::Literal(Literal::Number(token.literal?.parse().ok()?))),
             StringLiteral => Some(Expr::Literal(Literal::Str(token.literal?))),
+            LeftParen => {
+                if let Some(pos) = self.tokens[self.cursor..]
+                    .iter()
+                    .position(|tk| tk.kind == TokenKind::RightParen)
+                {
+                    let mut group_tokens = vec![];
+                    for i in self.cursor..self.tokens.len() {
+                        let expr = self.next();
+                        if expr.is_none() {
+                            break;
+                        }
+                        group_tokens.push(expr.unwrap());
+                    }
+                    let group = Expr::Group(group_tokens);
+                    // self.cursor += 1;
+                    Some(group)
+                } else {
+                    todo!("Unmatched parens");
+                    None
+                }
+            }
             Eof => None,
-            _ => unimplemented!(),
+            RightParen => None,
+            t => unimplemented!("{:?}", t),
         }
     }
 }

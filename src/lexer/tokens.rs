@@ -134,7 +134,7 @@ impl std::fmt::Debug for Token {
     }
 }
 #[allow(clippy::upper_case_acronyms)]
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub enum TokenKind {
     LeftParen,
     RightParen,

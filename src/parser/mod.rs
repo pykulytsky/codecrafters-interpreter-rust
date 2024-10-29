@@ -50,13 +50,15 @@ impl Iterator for Parser {
                     .position(|tk| tk.kind == TokenKind::RightParen)
                 {
                     let mut group_tokens = vec![];
-                    for i in self.cursor..self.tokens.len() {
-                        let expr = self.next();
-                        if expr.is_none() {
-                            break;
-                        }
-                        group_tokens.push(expr.unwrap());
+                    while let Some(expr) = self.next() {
+                        group_tokens.push(expr);
                     }
+                    // for i in self.cursor..self.tokens.len() {
+                    //     let expr = self.next();
+                    //     if expr.is_none() {
+                    //         break;
+                    //     }
+                    // }
                     let group = Expr::Group(group_tokens);
                     // self.cursor += 1;
                     Some(group)

@@ -9,4 +9,5 @@ pub struct Args {
 #[derive(Debug, Subcommand)]
 pub enum Commands {
     Tokenize { filename: String },
+    Parse { filename: String },
 }

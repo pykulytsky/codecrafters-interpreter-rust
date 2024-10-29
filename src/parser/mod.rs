@@ -43,6 +43,7 @@ impl Iterator for Parser {
             TRUE => Some(Expr::Literal(Literal::Logical(true))),
             FALSE => Some(Expr::Literal(Literal::Logical(false))),
             NumberLiteral => Some(Expr::Literal(Literal::Number(token.literal?.parse().ok()?))),
+            StringLiteral => Some(Expr::Literal(Literal::Str(token.literal?))),
             Eof => None,
             _ => unimplemented!(),
         }

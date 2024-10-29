@@ -1,6 +1,9 @@
 #![allow(dead_code, unused)]
 
-use crate::lexer::{Lexer, Token, TokenKind, RESERVED_WORDS};
+use crate::{
+    lexer::{Lexer, Token, TokenKind, RESERVED_WORDS},
+    parser::expr::UnaryKind,
+};
 pub use expr::Expr;
 pub use literal::Literal;
 
@@ -54,12 +57,19 @@ impl Iterator for Parser {
                         group_tokens.push(expr);
                     }
                     let group = Expr::Group(group_tokens);
-                    // self.cursor += 1;
                     Some(group)
                 } else {
                     todo!("Unmatched parens");
                     None
                 }
+            }
+            Bang => {
+                let operand = self.next()?;
+                Some(Expr::Unary(UnaryKind::LogicalNot, Box::new(operand)))
+            }
+            Minus => {
+                let operand = self.next()?;
+                Some(Expr::Unary(UnaryKind::Negation, Box::new(operand)))
             }
             Eof => None,
             RightParen => None,

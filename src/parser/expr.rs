@@ -2,7 +2,22 @@ use crate::parser::Literal as LiteralType;
 
 pub enum Expr {
     Literal(LiteralType),
+    Unary(UnaryKind, Box<Expr>),
     Group(Vec<Expr>),
+}
+
+pub enum UnaryKind {
+    Negation,
+    LogicalNot,
+}
+
+impl std::fmt::Debug for UnaryKind {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Negation => write!(f, "-"),
+            Self::LogicalNot => write!(f, "!"),
+        }
+    }
 }
 
 impl Expr {
@@ -21,6 +36,7 @@ impl std::fmt::Debug for Expr {
                 write!(f, ")")?;
                 Ok(())
             }
+            Self::Unary(kind, operand) => write!(f, "({:?} {:?})", kind, operand),
         }
     }
 }

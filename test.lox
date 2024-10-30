@@ -1,1 +1,1 @@
-(!true -5)
+("foo") (nil + (2 + true) / false) * 2

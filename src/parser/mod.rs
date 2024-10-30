@@ -2,7 +2,7 @@
 
 use crate::{
     lexer::{Lexer, Token, TokenKind, RESERVED_WORDS},
-    parser::expr::UnaryKind,
+    parser::expr::{BinaryKind, UnaryKind},
 };
 pub use expr::Expr;
 pub use literal::Literal;
@@ -14,40 +14,89 @@ pub mod literal;
 pub struct Parser {
     tokens: Vec<Token>,
     cursor: usize,
+    current_precedence: u8,
 }
+
+const ARITHMETIC_OPERATIONS: &[TokenKind] = &[
+    TokenKind::Plus,
+    TokenKind::Minus,
+    TokenKind::Star,
+    TokenKind::Slash,
+];
 
 impl Parser {
     pub fn new(lexer: Lexer) -> Self {
         let tokens = lexer.parse_to_end();
-        Self { tokens, cursor: 0 }
+        Self {
+            tokens,
+            cursor: 0,
+            current_precedence: 0,
+        }
     }
-    fn peek_token(&self) -> Token {
+    fn peek_token(&self) -> Option<Token> {
         // TODO: maybe return reference
-        self.tokens[self.cursor..].iter().next().unwrap().clone()
+        self.tokens[self.cursor..].iter().next().cloned()
     }
 
     fn advance(&mut self) {
         self.cursor += 1;
     }
-}
 
-impl Iterator for Parser {
-    type Item = Expr;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        if self.cursor >= self.tokens.len() {
-            return None;
+    fn get_precedence(&self, kind: &TokenKind) -> u8 {
+        match kind {
+            TokenKind::Star | TokenKind::Slash => 10,
+            TokenKind::Plus | TokenKind::Minus => 5,
+            _ => 0,
         }
-        let token = self.peek_token();
+    }
+
+    fn parse_expression(&mut self, precedence: u8) -> Option<Expr> {
+        let mut left = self.parse_primary()?;
+
+        let next_token = self.peek_token()?;
+        if ARITHMETIC_OPERATIONS.contains(&next_token.kind) {
+            while let Some(next_token) = self.peek_token() {
+                let op_precedence = self.get_precedence(&next_token.kind);
+
+                if op_precedence <= precedence {
+                    break;
+                }
+
+                self.advance();
+                let operator = match next_token.kind {
+                    TokenKind::Plus => BinaryKind::Addition,
+                    TokenKind::Minus => BinaryKind::Subtraction,
+                    TokenKind::Star => BinaryKind::Multiplication,
+                    TokenKind::Slash => BinaryKind::Division,
+                    _ => unreachable!(),
+                };
+
+                let right = self.parse_expression(op_precedence)?;
+
+                left = Expr::Binary {
+                    op: operator,
+                    left: Box::new(left),
+                    right: Box::new(right),
+                };
+            }
+        }
+
+        Some(left)
+    }
+
+    fn parse_primary(&mut self) -> Option<Expr> {
+        let token = self.peek_token()?;
         self.advance();
-        use crate::lexer::TokenKind::*;
+
         match token.kind {
-            NIL => Some(Expr::NIL),
-            TRUE => Some(Expr::Literal(Literal::Logical(true))),
-            FALSE => Some(Expr::Literal(Literal::Logical(false))),
-            NumberLiteral => Some(Expr::Literal(Literal::Number(token.literal?.parse().ok()?))),
-            StringLiteral => Some(Expr::Literal(Literal::Str(token.literal?))),
-            LeftParen => {
+            TokenKind::NIL => Some(Expr::NIL),
+            TokenKind::TRUE => Some(Expr::Literal(Literal::Logical(true))),
+            TokenKind::FALSE => Some(Expr::Literal(Literal::Logical(false))),
+            TokenKind::NumberLiteral => {
+                Some(Expr::Literal(Literal::Number(token.literal?.parse().ok()?)))
+            }
+            TokenKind::StringLiteral => Some(Expr::Literal(Literal::Str(token.literal?))),
+            TokenKind::LeftParen => {
                 if let Some(pos) = self.tokens[self.cursor..]
                     .iter()
                     .position(|tk| tk.kind == TokenKind::RightParen)
@@ -63,17 +112,25 @@ impl Iterator for Parser {
                     None
                 }
             }
-            Bang => {
-                let operand = self.next()?;
+            TokenKind::Bang => {
+                let operand = self.parse_expression(10)?;
                 Some(Expr::Unary(UnaryKind::LogicalNot, Box::new(operand)))
             }
-            Minus => {
-                let operand = self.next()?;
+            TokenKind::Minus => {
+                let operand = self.parse_expression(10)?;
                 Some(Expr::Unary(UnaryKind::Negation, Box::new(operand)))
             }
-            Eof => None,
-            RightParen => None,
+            TokenKind::Eof => None,
+            TokenKind::RightParen => None,
             t => unimplemented!("{:?}", t),
         }
+    }
+}
+
+impl Iterator for Parser {
+    type Item = Expr;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.parse_expression(0)
     }
 }

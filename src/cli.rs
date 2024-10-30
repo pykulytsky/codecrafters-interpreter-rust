@@ -10,4 +10,5 @@ pub struct Args {
 pub enum Commands {
     Tokenize { filename: String },
     Parse { filename: String },
+    Evaluate { filename: String },
 }

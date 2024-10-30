@@ -1,3 +1,5 @@
+use std::process::Termination;
+
 use thiserror::Error;
 
 #[derive(Debug, Error)]
@@ -16,3 +18,17 @@ pub enum ParserError {
 }
 
 pub type ParserResult<T> = std::result::Result<T, ParserError>;
+
+#[derive(Debug, Error)]
+pub enum EvaluationError {
+    #[error("Operand must be a number.\n[line 1]")]
+    MustBeNumber(usize),
+}
+
+pub type EvaluationResult<T> = std::result::Result<T, EvaluationError>;
+
+impl Termination for EvaluationError {
+    fn report(self) -> std::process::ExitCode {
+        65.into()
+    }
+}

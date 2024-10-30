@@ -1,6 +1,9 @@
 use std::ops::Deref;
 
-use crate::parser::Literal as LiteralType;
+use crate::parser::{
+    error::{EvaluationError, EvaluationResult},
+    Literal as LiteralType,
+};
 
 pub enum Expr {
     Literal(LiteralType),
@@ -57,14 +60,14 @@ impl std::fmt::Debug for BinaryKind {
     }
 }
 
-pub enum EvaluationResult {
+pub enum EvaluationValue {
     Nil,
     Number(f64),
     Str(String),
     Logical(bool),
 }
 
-impl std::fmt::Debug for EvaluationResult {
+impl std::fmt::Debug for EvaluationValue {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Nil => write!(f, "nil"),
@@ -78,108 +81,107 @@ impl std::fmt::Debug for EvaluationResult {
 impl Expr {
     pub const NIL: Self = Self::Literal(LiteralType::Nil);
 
-    pub fn evaluate(&self) -> EvaluationResult {
+    pub fn evaluate(&self) -> EvaluationResult<EvaluationValue> {
         match self {
             Expr::Literal(literal) => match literal {
-                LiteralType::Str(s) => EvaluationResult::Str(s.to_string()),
-                LiteralType::Number(n) => EvaluationResult::Number(*n),
-                LiteralType::Logical(l) => EvaluationResult::Logical(*l),
-                LiteralType::Nil => EvaluationResult::Nil,
+                LiteralType::Str(s) => Ok(EvaluationValue::Str(s.to_string())),
+                LiteralType::Number(n) => Ok(EvaluationValue::Number(*n)),
+                LiteralType::Logical(l) => Ok(EvaluationValue::Logical(*l)),
+                LiteralType::Nil => Ok(EvaluationValue::Nil),
             },
             Expr::Unary(unary_kind, expr) => {
-                let value = expr.evaluate();
+                let value = expr.evaluate()?;
                 match (unary_kind, value) {
-                    (UnaryKind::Negation, EvaluationResult::Nil) => todo!(),
-                    (UnaryKind::Negation, EvaluationResult::Number(n)) => {
-                        EvaluationResult::Number(-n)
+                    (UnaryKind::Negation, EvaluationValue::Nil) => todo!(),
+                    (UnaryKind::Negation, EvaluationValue::Number(n)) => {
+                        Ok(EvaluationValue::Number(-n))
                     }
-                    (UnaryKind::Negation, EvaluationResult::Str(_)) => todo!(),
-                    (UnaryKind::Negation, EvaluationResult::Logical(_)) => todo!(),
-                    (UnaryKind::LogicalNot, EvaluationResult::Nil) => {
-                        EvaluationResult::Logical(true)
+                    (UnaryKind::Negation, _) => Err(EvaluationError::MustBeNumber(1)),
+                    (UnaryKind::LogicalNot, EvaluationValue::Nil) => {
+                        Ok(EvaluationValue::Logical(true))
                     }
-                    (UnaryKind::LogicalNot, EvaluationResult::Number(n)) => {
-                        EvaluationResult::Logical(n == 0.0)
+                    (UnaryKind::LogicalNot, EvaluationValue::Number(n)) => {
+                        Ok(EvaluationValue::Logical(n == 0.0))
                     }
-                    (UnaryKind::LogicalNot, EvaluationResult::Str(_)) => todo!(),
-                    (UnaryKind::LogicalNot, EvaluationResult::Logical(l)) => {
-                        EvaluationResult::Logical(!l)
+                    (UnaryKind::LogicalNot, EvaluationValue::Str(_)) => todo!(),
+                    (UnaryKind::LogicalNot, EvaluationValue::Logical(l)) => {
+                        Ok(EvaluationValue::Logical(!l))
                     }
                 }
             }
             Expr::Binary { op, left, right } => {
-                let left = left.evaluate();
-                let right = right.evaluate();
+                let left = left.evaluate()?;
+                let right = right.evaluate()?;
                 match (op, left, right) {
                     (
                         BinaryKind::Multiplication,
-                        EvaluationResult::Number(left),
-                        EvaluationResult::Number(right),
-                    ) => EvaluationResult::Number(left * right),
+                        EvaluationValue::Number(left),
+                        EvaluationValue::Number(right),
+                    ) => Ok(EvaluationValue::Number(left * right)),
                     (
                         BinaryKind::Division,
-                        EvaluationResult::Number(left),
-                        EvaluationResult::Number(right),
-                    ) => EvaluationResult::Number(left / right),
+                        EvaluationValue::Number(left),
+                        EvaluationValue::Number(right),
+                    ) => Ok(EvaluationValue::Number(left / right)),
                     (
                         BinaryKind::Addition,
-                        EvaluationResult::Number(left),
-                        EvaluationResult::Number(right),
-                    ) => EvaluationResult::Number(left + right),
+                        EvaluationValue::Number(left),
+                        EvaluationValue::Number(right),
+                    ) => Ok(EvaluationValue::Number(left + right)),
                     (
                         BinaryKind::Subtraction,
-                        EvaluationResult::Number(left),
-                        EvaluationResult::Number(right),
-                    ) => EvaluationResult::Number(left - right),
+                        EvaluationValue::Number(left),
+                        EvaluationValue::Number(right),
+                    ) => Ok(EvaluationValue::Number(left - right)),
                     (
                         BinaryKind::Addition,
-                        EvaluationResult::Str(left),
-                        EvaluationResult::Str(right),
-                    ) => EvaluationResult::Str(left + &right),
+                        EvaluationValue::Str(left),
+                        EvaluationValue::Str(right),
+                    ) => Ok(EvaluationValue::Str(left + &right)),
 
                     (
                         BinaryKind::Less,
-                        EvaluationResult::Number(left),
-                        EvaluationResult::Number(right),
-                    ) => EvaluationResult::Logical(left < right),
+                        EvaluationValue::Number(left),
+                        EvaluationValue::Number(right),
+                    ) => Ok(EvaluationValue::Logical(left < right)),
                     (
                         BinaryKind::LessEqual,
-                        EvaluationResult::Number(left),
-                        EvaluationResult::Number(right),
-                    ) => EvaluationResult::Logical(left <= right),
+                        EvaluationValue::Number(left),
+                        EvaluationValue::Number(right),
+                    ) => Ok(EvaluationValue::Logical(left <= right)),
                     (
                         BinaryKind::Greater,
-                        EvaluationResult::Number(left),
-                        EvaluationResult::Number(right),
-                    ) => EvaluationResult::Logical(left > right),
+                        EvaluationValue::Number(left),
+                        EvaluationValue::Number(right),
+                    ) => Ok(EvaluationValue::Logical(left > right)),
                     (
                         BinaryKind::GreaterEqual,
-                        EvaluationResult::Number(left),
-                        EvaluationResult::Number(right),
-                    ) => EvaluationResult::Logical(left >= right),
+                        EvaluationValue::Number(left),
+                        EvaluationValue::Number(right),
+                    ) => Ok(EvaluationValue::Logical(left >= right)),
                     (
                         BinaryKind::Equality,
-                        EvaluationResult::Number(left),
-                        EvaluationResult::Number(right),
-                    ) => EvaluationResult::Logical(left == right),
+                        EvaluationValue::Number(left),
+                        EvaluationValue::Number(right),
+                    ) => Ok(EvaluationValue::Logical(left == right)),
                     (
                         BinaryKind::NotEquality,
-                        EvaluationResult::Number(left),
-                        EvaluationResult::Number(right),
-                    ) => EvaluationResult::Logical(left != right),
+                        EvaluationValue::Number(left),
+                        EvaluationValue::Number(right),
+                    ) => Ok(EvaluationValue::Logical(left != right)),
                     (
                         BinaryKind::Equality,
-                        EvaluationResult::Str(left),
-                        EvaluationResult::Str(right),
-                    ) => EvaluationResult::Logical(left == right),
+                        EvaluationValue::Str(left),
+                        EvaluationValue::Str(right),
+                    ) => Ok(EvaluationValue::Logical(left == right)),
                     (
                         BinaryKind::NotEquality,
-                        EvaluationResult::Str(left),
-                        EvaluationResult::Str(right),
-                    ) => EvaluationResult::Logical(left != right),
+                        EvaluationValue::Str(left),
+                        EvaluationValue::Str(right),
+                    ) => Ok(EvaluationValue::Logical(left != right)),
                     // TODO: handle specific cases, like string and number
-                    (BinaryKind::Equality, _, _) => EvaluationResult::Logical(false),
-                    (BinaryKind::NotEquality, _, _) => EvaluationResult::Logical(false),
+                    (BinaryKind::Equality, _, _) => Ok(EvaluationValue::Logical(false)),
+                    (BinaryKind::NotEquality, _, _) => Ok(EvaluationValue::Logical(false)),
                     _ => todo!(),
                 }
             }

@@ -182,7 +182,7 @@ impl Expr {
                     // TODO: handle specific cases, like string and number
                     (BinaryKind::Equality, _, _) => Ok(EvaluationValue::Logical(false)),
                     (BinaryKind::NotEquality, _, _) => Ok(EvaluationValue::Logical(false)),
-                    _ => todo!(),
+                    _ => Err(EvaluationError::OperandsMustBeNumber(1)),
                 }
             }
             Expr::Group(group) => group[0].evaluate(),

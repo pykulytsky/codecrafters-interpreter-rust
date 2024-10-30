@@ -23,6 +23,9 @@ pub type ParserResult<T> = std::result::Result<T, ParserError>;
 pub enum EvaluationError {
     #[error("Operand must be a number.\n[line 1]")]
     MustBeNumber(usize),
+
+    #[error("Operands must be a number.\n[line 1]")]
+    OperandsMustBeNumber(usize),
 }
 
 pub type EvaluationResult<T> = std::result::Result<T, EvaluationError>;

@@ -146,6 +146,27 @@ impl Expr {
                         EvaluationResult::Str(left),
                         EvaluationResult::Str(right),
                     ) => EvaluationResult::Str(left + &right),
+
+                    (
+                        BinaryKind::Less,
+                        EvaluationResult::Number(left),
+                        EvaluationResult::Number(right),
+                    ) => EvaluationResult::Logical(left < right),
+                    (
+                        BinaryKind::LessEqual,
+                        EvaluationResult::Number(left),
+                        EvaluationResult::Number(right),
+                    ) => EvaluationResult::Logical(left <= right),
+                    (
+                        BinaryKind::Greater,
+                        EvaluationResult::Number(left),
+                        EvaluationResult::Number(right),
+                    ) => EvaluationResult::Logical(left > right),
+                    (
+                        BinaryKind::GreaterEqual,
+                        EvaluationResult::Number(left),
+                        EvaluationResult::Number(right),
+                    ) => EvaluationResult::Logical(left >= right),
                     _ => todo!(),
                 }
             }

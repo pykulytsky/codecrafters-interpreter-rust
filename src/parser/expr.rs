@@ -141,6 +141,11 @@ impl Expr {
                         EvaluationResult::Number(left),
                         EvaluationResult::Number(right),
                     ) => EvaluationResult::Number(left - right),
+                    (
+                        BinaryKind::Addition,
+                        EvaluationResult::Str(left),
+                        EvaluationResult::Str(right),
+                    ) => EvaluationResult::Str(left + &right),
                     _ => todo!(),
                 }
             }

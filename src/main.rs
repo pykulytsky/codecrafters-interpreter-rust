@@ -42,8 +42,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             for expr in parser.by_ref() {
                 match expr {
                     parser::Expr::Literal(literal) => match literal {
-                        parser::Literal::Str(_) => todo!(),
-                        parser::Literal::Number(_) => todo!(),
+                        parser::Literal::Str(s) => println!("{s}"),
+                        parser::Literal::Number(n) => println!("{n}"),
                         parser::Literal::Logical(l) => println!("{l}"),
                         parser::Literal::Nil => println!("nil"),
                     },

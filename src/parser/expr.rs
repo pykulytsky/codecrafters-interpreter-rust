@@ -87,16 +87,6 @@ impl Expr {
                 LiteralType::Nil => EvaluationResult::Nil,
             },
             Expr::Unary(unary_kind, expr) => {
-                // let value = match expr.deref() {
-                //     Expr::Group(group) => {
-                //         for expr in group {
-                //             dbg!(&expr);
-                //             println!("Evaluated group: {:?}", expr.evaluate())
-                //         }
-                //         todo!()
-                //     }
-                //     _ => expr.evaluate(),
-                // };
                 let value = expr.evaluate();
                 match (unary_kind, value) {
                     (UnaryKind::Negation, EvaluationResult::Nil) => todo!(),
@@ -167,6 +157,29 @@ impl Expr {
                         EvaluationResult::Number(left),
                         EvaluationResult::Number(right),
                     ) => EvaluationResult::Logical(left >= right),
+                    (
+                        BinaryKind::Equality,
+                        EvaluationResult::Number(left),
+                        EvaluationResult::Number(right),
+                    ) => EvaluationResult::Logical(left == right),
+                    (
+                        BinaryKind::NotEquality,
+                        EvaluationResult::Number(left),
+                        EvaluationResult::Number(right),
+                    ) => EvaluationResult::Logical(left != right),
+                    (
+                        BinaryKind::Equality,
+                        EvaluationResult::Str(left),
+                        EvaluationResult::Str(right),
+                    ) => EvaluationResult::Logical(left == right),
+                    (
+                        BinaryKind::NotEquality,
+                        EvaluationResult::Str(left),
+                        EvaluationResult::Str(right),
+                    ) => EvaluationResult::Logical(left != right),
+                    // TODO: handle specific cases, like string and number
+                    (BinaryKind::Equality, _, _) => EvaluationResult::Logical(false),
+                    (BinaryKind::NotEquality, _, _) => EvaluationResult::Logical(false),
                     _ => todo!(),
                 }
             }

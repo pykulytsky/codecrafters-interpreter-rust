@@ -40,7 +40,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             let lexer = Lexer::new(&filename).await?;
             let mut parser = Parser::new(lexer);
             for expr in parser.by_ref() {
-                evaluate_expression(expr);
+                println!("{:?}", expr.evaluate());
             }
             if parser.result.is_err() {
                 exit(65);
@@ -48,22 +48,4 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     }
     Ok(())
-}
-
-fn evaluate_expression(expr: Expr) {
-    match expr {
-        parser::Expr::Literal(literal) => match literal {
-            parser::Literal::Str(s) => println!("{s}"),
-            parser::Literal::Number(n) => println!("{n}"),
-            parser::Literal::Logical(l) => println!("{l}"),
-            parser::Literal::Nil => println!("nil"),
-        },
-        parser::Expr::Unary(unary_kind, expr) => todo!(),
-        parser::Expr::Binary { op, left, right } => todo!(),
-        parser::Expr::Group(group) => {
-            for expr in group {
-                evaluate_expression(expr);
-            }
-        }
-    }
 }

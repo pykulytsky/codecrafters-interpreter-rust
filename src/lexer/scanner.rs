@@ -33,8 +33,8 @@ impl Lexer {
         self.source[self.cursor..].starts_with(s)
     }
 
-    pub fn parse_to_end(self) -> Vec<Token> {
-        self.into_iter().collect()
+    pub fn parse_to_end(&mut self) -> Vec<Token> {
+        self.by_ref().collect()
     }
 }
 

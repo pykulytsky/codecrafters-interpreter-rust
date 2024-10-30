@@ -1,12 +1,16 @@
 #![allow(dead_code, unused)]
 
 use crate::{
-    lexer::{Lexer, Token, TokenKind, RESERVED_WORDS},
-    parser::expr::{BinaryKind, UnaryKind},
+    lexer::{Lexer, LexerResult, Token, TokenKind, RESERVED_WORDS},
+    parser::{
+        error::{ParserError, ParserResult},
+        expr::{BinaryKind, UnaryKind},
+    },
 };
 pub use expr::Expr;
 pub use literal::Literal;
 
+pub mod error;
 pub mod expr;
 pub mod literal;
 
@@ -15,6 +19,7 @@ pub struct Parser {
     tokens: Vec<Token>,
     cursor: usize,
     current_precedence: u8,
+    pub result: ParserResult<()>,
 }
 
 fn is_binary_op(kind: TokenKind) -> bool {
@@ -34,12 +39,13 @@ fn is_binary_op(kind: TokenKind) -> bool {
 }
 
 impl Parser {
-    pub fn new(lexer: Lexer) -> Self {
+    pub fn new(mut lexer: Lexer) -> Self {
         let tokens = lexer.parse_to_end();
         Self {
             tokens,
             cursor: 0,
             current_precedence: 0,
+            result: lexer_to_parser_result(lexer.result),
         }
     }
     fn peek_token(&self) -> Option<Token> {
@@ -67,7 +73,7 @@ impl Parser {
     }
 
     fn parse_expression(&mut self, precedence: u8) -> Option<Expr> {
-        let mut left = self.parse_primary()?;
+        let mut primary = self.parse_primary()?;
 
         let next_token = self.peek_token()?;
         if is_binary_op(next_token.kind) {
@@ -93,17 +99,29 @@ impl Parser {
                     _ => unreachable!(),
                 };
 
-                let right = self.parse_expression(op_precedence)?;
+                let right = self.parse_expression(op_precedence);
+                if right.is_none() {
+                    let lexeme = &self.tokens[self.cursor - 1].lexeme;
+                    eprintln!("[line 1] Error at '{}': Expect expression.", lexeme);
+                    self.result = Err(ParserError::ExpectedExpression {
+                        line: 1,
+                        lexeme: lexeme.to_string(),
+                    });
+                    return None;
+                }
 
-                left = Expr::Binary {
+                primary = Expr::Binary {
                     op: operator,
-                    left: Box::new(left),
-                    right: Box::new(right),
+                    left: Box::new(primary),
+                    right: Box::new(right?),
                 };
             }
         }
+        if self.result.is_err() {
+            return None;
+        }
 
-        Some(left)
+        Some(primary)
     }
 
     fn parse_primary(&mut self) -> Option<Expr> {
@@ -130,7 +148,8 @@ impl Parser {
                     let group = Expr::Group(group_tokens);
                     Some(group)
                 } else {
-                    todo!("Unmatched parens");
+                    eprintln!("[line 1] Error: Unmatched parens");
+                    self.result = Err(ParserError::UnmatchedParens(1));
                     None
                 }
             }
@@ -144,9 +163,17 @@ impl Parser {
             }
             TokenKind::Eof => None,
             TokenKind::RightParen => None,
-            t => unimplemented!("{:?}", t),
+            t => {
+                eprintln!("[line 1] Error: Unexpected token");
+                self.result = Err(ParserError::UnexpectedToken(1));
+                None
+            } // t => unimplemented!("{:?}", t),
         }
     }
+}
+
+fn lexer_to_parser_result(lexer_result: LexerResult<()>) -> ParserResult<()> {
+    Ok(lexer_result?)
 }
 
 impl Iterator for Parser {

@@ -17,16 +17,21 @@ pub struct Parser {
     current_precedence: u8,
 }
 
-const BINARY_OPERATIONS: &[TokenKind] = &[
-    TokenKind::Plus,
-    TokenKind::Minus,
-    TokenKind::Star,
-    TokenKind::Slash,
-    TokenKind::Less,
-    TokenKind::LessEqual,
-    TokenKind::Greater,
-    TokenKind::GreaterEqual,
-];
+fn is_binary_op(kind: TokenKind) -> bool {
+    matches!(
+        kind,
+        TokenKind::Plus
+            | TokenKind::Minus
+            | TokenKind::Star
+            | TokenKind::Slash
+            | TokenKind::Less
+            | TokenKind::LessEqual
+            | TokenKind::Greater
+            | TokenKind::GreaterEqual
+            | TokenKind::EqualEqual
+            | TokenKind::BangEqual
+    )
+}
 
 impl Parser {
     pub fn new(lexer: Lexer) -> Self {
@@ -54,7 +59,9 @@ impl Parser {
             | TokenKind::Less
             | TokenKind::LessEqual
             | TokenKind::Greater
-            | TokenKind::GreaterEqual => 5,
+            | TokenKind::GreaterEqual
+            | TokenKind::EqualEqual
+            | TokenKind::BangEqual => 5,
             _ => 0,
         }
     }
@@ -63,7 +70,7 @@ impl Parser {
         let mut left = self.parse_primary()?;
 
         let next_token = self.peek_token()?;
-        if BINARY_OPERATIONS.contains(&next_token.kind) {
+        if is_binary_op(next_token.kind) {
             while let Some(next_token) = self.peek_token() {
                 let op_precedence = self.get_precedence(&next_token.kind);
 
@@ -81,6 +88,8 @@ impl Parser {
                     TokenKind::LessEqual => BinaryKind::LessEqual,
                     TokenKind::Greater => BinaryKind::Greater,
                     TokenKind::GreaterEqual => BinaryKind::GreaterEqual,
+                    TokenKind::EqualEqual => BinaryKind::Equality,
+                    TokenKind::BangEqual => BinaryKind::NotEquality,
                     _ => unreachable!(),
                 };
 

@@ -34,6 +34,8 @@ pub enum BinaryKind {
     LessEqual,
     Greater,
     GreaterEqual,
+    Equality,
+    NotEquality,
 }
 
 impl std::fmt::Debug for BinaryKind {
@@ -47,6 +49,8 @@ impl std::fmt::Debug for BinaryKind {
             Self::LessEqual => write!(f, "<="),
             Self::Greater => write!(f, ">"),
             Self::GreaterEqual => write!(f, ">="),
+            Self::Equality => write!(f, "=="),
+            Self::NotEquality => write!(f, "!="),
         }
     }
 }

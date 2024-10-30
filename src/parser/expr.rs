@@ -117,7 +117,23 @@ impl Expr {
                     }
                 }
             }
-            Expr::Binary { op, left, right } => todo!(),
+            Expr::Binary { op, left, right } => {
+                let left = left.evaluate();
+                let right = right.evaluate();
+                match (op, left, right) {
+                    (
+                        BinaryKind::Multiplication,
+                        EvaluationResult::Number(left),
+                        EvaluationResult::Number(right),
+                    ) => EvaluationResult::Number(left * right),
+                    (
+                        BinaryKind::Division,
+                        EvaluationResult::Number(left),
+                        EvaluationResult::Number(right),
+                    ) => EvaluationResult::Number(left / right),
+                    _ => todo!(),
+                }
+            }
             Expr::Group(group) => group[0].evaluate(),
         }
     }

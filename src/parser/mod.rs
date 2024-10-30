@@ -17,11 +17,15 @@ pub struct Parser {
     current_precedence: u8,
 }
 
-const ARITHMETIC_OPERATIONS: &[TokenKind] = &[
+const BINARY_OPERATIONS: &[TokenKind] = &[
     TokenKind::Plus,
     TokenKind::Minus,
     TokenKind::Star,
     TokenKind::Slash,
+    TokenKind::Less,
+    TokenKind::LessEqual,
+    TokenKind::Greater,
+    TokenKind::GreaterEqual,
 ];
 
 impl Parser {
@@ -45,7 +49,12 @@ impl Parser {
     fn get_precedence(&self, kind: &TokenKind) -> u8 {
         match kind {
             TokenKind::Star | TokenKind::Slash => 10,
-            TokenKind::Plus | TokenKind::Minus => 5,
+            TokenKind::Plus
+            | TokenKind::Minus
+            | TokenKind::Less
+            | TokenKind::LessEqual
+            | TokenKind::Greater
+            | TokenKind::GreaterEqual => 5,
             _ => 0,
         }
     }
@@ -54,7 +63,7 @@ impl Parser {
         let mut left = self.parse_primary()?;
 
         let next_token = self.peek_token()?;
-        if ARITHMETIC_OPERATIONS.contains(&next_token.kind) {
+        if BINARY_OPERATIONS.contains(&next_token.kind) {
             while let Some(next_token) = self.peek_token() {
                 let op_precedence = self.get_precedence(&next_token.kind);
 
@@ -68,6 +77,10 @@ impl Parser {
                     TokenKind::Minus => BinaryKind::Subtraction,
                     TokenKind::Star => BinaryKind::Multiplication,
                     TokenKind::Slash => BinaryKind::Division,
+                    TokenKind::Less => BinaryKind::Less,
+                    TokenKind::LessEqual => BinaryKind::LessEqual,
+                    TokenKind::Greater => BinaryKind::Greater,
+                    TokenKind::GreaterEqual => BinaryKind::GreaterEqual,
                     _ => unreachable!(),
                 };
 

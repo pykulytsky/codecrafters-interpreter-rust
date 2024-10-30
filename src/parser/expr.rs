@@ -30,6 +30,10 @@ pub enum BinaryKind {
     Subtraction,
     Multiplication,
     Division,
+    Less,
+    LessEqual,
+    Greater,
+    GreaterEqual,
 }
 
 impl std::fmt::Debug for BinaryKind {
@@ -39,6 +43,10 @@ impl std::fmt::Debug for BinaryKind {
             Self::Subtraction => write!(f, "-"),
             Self::Multiplication => write!(f, "*"),
             Self::Division => write!(f, "/"),
+            Self::Less => write!(f, "<"),
+            Self::LessEqual => write!(f, "<="),
+            Self::Greater => write!(f, ">"),
+            Self::GreaterEqual => write!(f, ">="),
         }
     }
 }

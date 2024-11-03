@@ -9,10 +9,12 @@ use crate::{
 };
 pub use expr::Expr;
 pub use literal::Literal;
+pub use stmt::Stmt;
 
 pub mod error;
 pub mod expr;
 pub mod literal;
+pub mod stmt;
 
 #[derive(Debug)]
 pub struct Parser {
@@ -70,6 +72,32 @@ impl Parser {
             | TokenKind::BangEqual => 5,
             _ => 0,
         }
+    }
+
+    pub fn parse_statement(&mut self) -> Option<Stmt> {
+        let token = self.peek_token()?;
+        self.advance();
+        let stmt = match token.kind {
+            TokenKind::PRINT => {
+                match self.parse_expression(0) {
+                    Some(expr) => Some(Stmt::Print(expr)),
+                    None => {
+                        // eprintln!("[line 1] Error at '{}': Expect expression.", lexeme);
+                        self.result = Err(ParserError::ExpectedExpression {
+                            line: 1,
+                            lexeme: "print".to_string(),
+                        });
+                        None
+                    }
+                }
+            }
+            _ => Some(Stmt::Expr(self.parse_expression(0)?)),
+        };
+
+        let token = self.peek_token()?;
+        assert!(matches!(token.kind, TokenKind::Semicolon));
+        self.advance();
+        stmt
     }
 
     fn parse_expression(&mut self, precedence: u8) -> Option<Expr> {

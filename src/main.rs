@@ -54,6 +54,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 exit(65);
             }
         }
+        Commands::Run { filename } => {
+            let lexer = Lexer::new(&filename).await?;
+            let mut parser = Parser::new(lexer);
+            match parser.parse_statement() {
+                Some(stmt) => {
+                    stmt.evaluate();
+                }
+                None => {
+                    exit(65);
+                }
+            }
+        }
     }
     Ok(())
 }

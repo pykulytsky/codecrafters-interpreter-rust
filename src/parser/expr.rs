@@ -65,6 +65,7 @@ pub enum EvaluationValue {
     Number(f64),
     Str(String),
     Logical(bool),
+    Void,
 }
 
 impl std::fmt::Debug for EvaluationValue {
@@ -74,6 +75,7 @@ impl std::fmt::Debug for EvaluationValue {
             Self::Number(arg0) => write!(f, "{arg0}"),
             Self::Str(arg0) => write!(f, "{arg0}"),
             Self::Logical(arg0) => write!(f, "{arg0}"),
+            Self::Void => Ok(()),
         }
     }
 }
@@ -93,6 +95,7 @@ impl Expr {
                 let value = expr.evaluate()?;
                 match (unary_kind, value) {
                     (UnaryKind::Negation, EvaluationValue::Nil) => todo!(),
+                    (_, EvaluationValue::Void) => todo!(),
                     (UnaryKind::Negation, EvaluationValue::Number(n)) => {
                         Ok(EvaluationValue::Number(-n))
                     }

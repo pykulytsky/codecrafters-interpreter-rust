@@ -6,7 +6,7 @@ use std::process::exit;
 use cli::*;
 use lexer::Lexer;
 
-use crate::parser::{Expr, Parser};
+use crate::parser::{Expr, Parser, Stmt};
 
 mod cli;
 mod lexer;
@@ -39,14 +39,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         Commands::Evaluate { filename } => {
             let lexer = Lexer::new(&filename).await?;
             let mut parser = Parser::new(lexer);
-            for expr in parser.by_ref() {
-                match expr.evaluate() {
-                    Ok(res) => {
-                        println!("{:?}", res);
-                    }
-                    Err(err) => {
-                        eprintln!("{}", err);
-                        exit(70);
+            for stmt in parser.by_ref() {
+                if let Stmt::Expr(expr) = stmt {
+                    match expr.evaluate() {
+                        Ok(res) => {
+                            println!("{:?}", res);
+                        }
+                        Err(err) => {
+                            eprintln!("{}", err);
+                            exit(70);
+                        }
                     }
                 }
             }
@@ -57,13 +59,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         Commands::Run { filename } => {
             let lexer = Lexer::new(&filename).await?;
             let mut parser = Parser::new(lexer);
-            match parser.parse_statement() {
-                Some(stmt) => {
-                    stmt.evaluate();
-                }
-                None => {
-                    exit(65);
-                }
+            for stmt in parser.by_ref() {
+                stmt.run();
+            }
+
+            if parser.result.is_err() {
+                exit(65);
             }
         }
     }

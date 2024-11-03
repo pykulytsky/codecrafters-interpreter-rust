@@ -6,9 +6,9 @@ pub enum Stmt {
 }
 
 impl Stmt {
-    pub fn evaluate(&self) -> EvaluationResult<EvaluationValue> {
+    pub fn run(&self) -> EvaluationResult<EvaluationValue> {
         match self {
-            Stmt::Expr(expr) => expr.evaluate(),
+            Stmt::Expr(expr) => Ok(EvaluationValue::Void),
             Stmt::Print(expr) => {
                 println!("{:?}", expr.evaluate()?);
                 Ok(EvaluationValue::Void)

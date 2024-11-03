@@ -76,9 +76,9 @@ impl Parser {
 
     pub fn parse_statement(&mut self) -> Option<Stmt> {
         let token = self.peek_token()?;
-        self.advance();
         let stmt = match token.kind {
             TokenKind::PRINT => {
+                self.advance();
                 match self.parse_expression(0) {
                     Some(expr) => Some(Stmt::Print(expr)),
                     None => {
@@ -94,9 +94,11 @@ impl Parser {
             _ => Some(Stmt::Expr(self.parse_expression(0)?)),
         };
 
-        // let token = self.peek_token()?;
-        // assert!(matches!(token.kind, TokenKind::Semicolon));
-        // self.advance();
+        if let Some(Stmt::Print(_)) = stmt {
+            let token = self.peek_token()?;
+            assert!(matches!(token.kind, TokenKind::Semicolon));
+            self.advance();
+        }
         stmt
     }
 
@@ -171,7 +173,10 @@ impl Parser {
                 {
                     let mut group_tokens = vec![];
                     for expr in self.by_ref() {
-                        group_tokens.push(expr);
+                        // TODO: handle statement cases
+                        if let Stmt::Expr(expr) = expr {
+                            group_tokens.push(expr);
+                        }
                     }
                     let group = Expr::Group(group_tokens);
                     Some(group)
@@ -192,6 +197,7 @@ impl Parser {
             TokenKind::Eof => None,
             TokenKind::RightParen => None,
             t => {
+                dbg!(t);
                 eprintln!("[line 1] Error: Unexpected token");
                 self.result = Err(ParserError::UnexpectedToken(1));
                 None
@@ -205,9 +211,9 @@ fn lexer_to_parser_result(lexer_result: LexerResult<()>) -> ParserResult<()> {
 }
 
 impl Iterator for Parser {
-    type Item = Expr;
+    type Item = Stmt;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.parse_expression(0)
+        self.parse_statement()
     }
 }

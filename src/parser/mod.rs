@@ -94,9 +94,9 @@ impl Parser {
             _ => Some(Stmt::Expr(self.parse_expression(0)?)),
         };
 
-        let token = self.peek_token()?;
-        assert!(matches!(token.kind, TokenKind::Semicolon));
-        self.advance();
+        // let token = self.peek_token()?;
+        // assert!(matches!(token.kind, TokenKind::Semicolon));
+        // self.advance();
         stmt
     }
 

@@ -62,14 +62,12 @@ impl Parser {
     fn get_precedence(&self, kind: &TokenKind) -> u8 {
         match kind {
             TokenKind::Star | TokenKind::Slash => 10,
-            TokenKind::Plus
-            | TokenKind::Minus
-            | TokenKind::Less
-            | TokenKind::LessEqual
+            TokenKind::Plus | TokenKind::Minus | TokenKind::Less => 5,
+            TokenKind::LessEqual
             | TokenKind::Greater
             | TokenKind::GreaterEqual
             | TokenKind::EqualEqual
-            | TokenKind::BangEqual => 5,
+            | TokenKind::BangEqual => 2,
             _ => 0,
         }
     }
@@ -94,10 +92,11 @@ impl Parser {
             _ => Some(Stmt::Expr(self.parse_expression(0)?)),
         };
 
-        if let Some(Stmt::Print(_)) = stmt {
+        if stmt.is_some() {
             let token = self.peek_token()?;
-            assert!(matches!(token.kind, TokenKind::Semicolon));
-            self.advance();
+            if matches!(token.kind, TokenKind::Semicolon) {
+                self.advance();
+            }
         }
         stmt
     }

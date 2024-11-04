@@ -60,7 +60,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             let lexer = Lexer::new(&filename).await?;
             let mut parser = Parser::new(lexer);
             for stmt in parser.by_ref() {
-                stmt.run();
+                match stmt.run() {
+                    Ok(_) => {}
+                    Err(err) => {
+                        eprintln!("{}", err);
+                        exit(70);
+                    }
+                }
             }
 
             if parser.result.is_err() {

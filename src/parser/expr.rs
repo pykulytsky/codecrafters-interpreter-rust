@@ -182,6 +182,16 @@ impl Expr {
                         EvaluationValue::Str(left),
                         EvaluationValue::Str(right),
                     ) => Ok(EvaluationValue::Logical(left != right)),
+                    (
+                        BinaryKind::Equality,
+                        EvaluationValue::Logical(left),
+                        EvaluationValue::Logical(right),
+                    ) => Ok(EvaluationValue::Logical(left == right)),
+                    (
+                        BinaryKind::NotEquality,
+                        EvaluationValue::Logical(left),
+                        EvaluationValue::Logical(right),
+                    ) => Ok(EvaluationValue::Logical(left != right)),
                     // TODO: handle specific cases, like string and number
                     (BinaryKind::Equality, _, _) => Ok(EvaluationValue::Logical(false)),
                     (BinaryKind::NotEquality, _, _) => Ok(EvaluationValue::Logical(false)),

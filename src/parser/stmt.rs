@@ -8,7 +8,10 @@ pub enum Stmt {
 impl Stmt {
     pub fn run(&self) -> EvaluationResult<EvaluationValue> {
         match self {
-            Stmt::Expr(expr) => Ok(EvaluationValue::Void),
+            Stmt::Expr(expr) => {
+                let evaluation_result = expr.evaluate()?;
+                Ok(EvaluationValue::Void)
+            }
             Stmt::Print(expr) => {
                 println!("{:?}", expr.evaluate()?);
                 Ok(EvaluationValue::Void)

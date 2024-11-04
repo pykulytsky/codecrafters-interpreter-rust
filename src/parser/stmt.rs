@@ -3,6 +3,7 @@ use crate::parser::{error::EvaluationResult, expr::EvaluationValue, Expr};
 pub enum Stmt {
     Expr(Expr),
     Print(Expr),
+    // Assignment(Expr, Expr),
 }
 
 impl Stmt {
@@ -23,8 +24,9 @@ impl Stmt {
 impl std::fmt::Debug for Stmt {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Stmt::Expr(expr) => write!(f, "{:?}", expr),
+            Stmt::Expr(expr) => expr.fmt(f),
             Stmt::Print(expr) => write!(f, "print {:?};", expr),
+            // Stmt::Assignment(left, right) => write!(f, "var {:?} = {:?};", left, right),
         }
     }
 }

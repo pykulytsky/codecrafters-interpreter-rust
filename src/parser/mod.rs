@@ -1,10 +1,12 @@
 #![allow(dead_code, unused)]
 
+use std::collections::BTreeMap;
+
 use crate::{
     lexer::{Lexer, LexerResult, Token, TokenKind, RESERVED_WORDS},
     parser::{
-        error::{ParserError, ParserResult},
-        expr::{BinaryKind, UnaryKind},
+        error::{EvaluationResult, ParserError, ParserResult},
+        expr::{BinaryKind, EvaluationValue, UnaryKind},
     },
 };
 pub use expr::Expr;
@@ -22,6 +24,7 @@ pub struct Parser {
     cursor: usize,
     current_precedence: u8,
     pub result: ParserResult<()>,
+    global_variables: BTreeMap<Token, EvaluationValue>,
 }
 
 fn is_binary_op(kind: TokenKind) -> bool {
@@ -47,6 +50,7 @@ impl Parser {
             tokens,
             cursor: 0,
             current_precedence: 0,
+            global_variables: BTreeMap::new(),
             result: lexer_to_parser_result(lexer.result),
         }
     }
@@ -72,22 +76,51 @@ impl Parser {
         }
     }
 
+    fn expect_expression_err(&mut self) -> Option<Stmt> {
+        self.result = Err(ParserError::ExpectedExpression {
+            line: 1,
+            lexeme: "print".to_string(),
+        });
+        None
+    }
+
+    fn expect_print_stmt(&mut self) -> Option<Stmt> {
+        match self.parse_expression(0) {
+            Some(expr) => Some(Stmt::Print(expr)),
+            None => self.expect_expression_err(),
+        }
+    }
+
+    fn expect_var_stmt(&mut self) -> Option<Stmt> {
+        match self.parse_expression(0) {
+            Some(expr) => Some(Stmt::Print(expr)),
+            None => self.expect_expression_err(),
+        }
+    }
+
+    fn parse_ident(&mut self) -> Option<Token> {
+        let next_token = self.peek_token()?;
+        match next_token.kind {
+            TokenKind::Identifier => Some(next_token),
+            _ => None,
+        }
+    }
+
     pub fn parse_statement(&mut self) -> Option<Stmt> {
         let token = self.peek_token()?;
         let stmt = match token.kind {
             TokenKind::PRINT => {
                 self.advance();
-                match self.parse_expression(0) {
-                    Some(expr) => Some(Stmt::Print(expr)),
-                    None => {
-                        // eprintln!("[line 1] Error at '{}': Expect expression.", lexeme);
-                        self.result = Err(ParserError::ExpectedExpression {
-                            line: 1,
-                            lexeme: "print".to_string(),
-                        });
-                        None
-                    }
-                }
+                self.expect_print_stmt()
+            }
+            TokenKind::VAR => {
+                self.advance();
+                let ident = self.parse_ident();
+                self.advance(); // TODO: check if it is equal
+
+                let assignment = self.expect_var_stmt();
+
+                todo!()
             }
             _ => Some(Stmt::Expr(self.parse_expression(0)?)),
         };

@@ -26,6 +26,9 @@ pub enum EvaluationError {
 
     #[error("Operands must be a number.\n[line 1]")]
     OperandsMustBeNumber(usize),
+
+    #[error("Undefined variable '{0}'.")]
+    UndefinedVariable(String),
 }
 
 pub type EvaluationResult<T> = std::result::Result<T, EvaluationError>;

@@ -120,9 +120,17 @@ impl Parser {
             TokenKind::VAR => {
                 self.advance();
                 let ident = self.parse_ident()?;
-                self.advance(); // TODO: check if it is equal
-
-                self.expect_assignment_stmt(ident)
+                match self.peek_token()?.kind {
+                    TokenKind::Equal => {
+                        self.advance();
+                        self.expect_assignment_stmt(ident)
+                    }
+                    TokenKind::Semicolon => {
+                self.global_variables.insert(ident.clone(), Expr::NIL);
+                Some(Stmt::Assignment(ident, Expr::NIL))
+                    }
+                    _ => unreachable!("Handle errors"),
+                }
             }
             _ => Some(Stmt::Expr(self.parse_expression(0)?)),
         };

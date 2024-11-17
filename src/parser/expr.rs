@@ -211,7 +211,7 @@ impl Expr {
             Expr::Group(group) => group[0].evaluate(global_variables),
             Expr::Ident(ident) => {
                 let Some(expr) = global_variables.get(ident) else {
-                    return Err(EvaluationError::MustBeNumber(1)); // TODO: add propper error
+                    return Err(EvaluationError::UndefinedVariable(ident.0.clone()));
                 };
                 expr.evaluate(global_variables)
             }

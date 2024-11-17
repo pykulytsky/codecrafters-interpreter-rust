@@ -94,8 +94,18 @@ impl Parser {
     fn expect_assignment_stmt(&mut self, ident: Ident) -> Option<Stmt> {
         match self.parse_expression(0) {
             Some(expr) => {
-                self.global_variables.insert(ident.clone(), expr.clone());
-                Some(Stmt::Assignment(ident, expr))
+                let assignment_expr = if let Expr::Ident(ref id) = expr {
+                    if !self.global_variables.contains_key(id) {
+                        self.result = Err(ParserError::UndefinedVariable(id.0.to_owned()));
+                        return None;
+                    }
+                    expr.evaluate(&self.global_variables).ok()?.to_expr()
+                } else {
+                    expr
+                };
+                self.global_variables
+                    .insert(ident.clone(), assignment_expr.clone());
+                Some(Stmt::Assignment(ident, assignment_expr))
             }
             None => self.expect_expression_err(),
         }
@@ -126,8 +136,8 @@ impl Parser {
                         self.expect_assignment_stmt(ident)
                     }
                     TokenKind::Semicolon => {
-                self.global_variables.insert(ident.clone(), Expr::NIL);
-                Some(Stmt::Assignment(ident, Expr::NIL))
+                        self.global_variables.insert(ident.clone(), Expr::NIL);
+                        Some(Stmt::Assignment(ident, Expr::NIL))
                     }
                     _ => unreachable!("Handle errors"),
                 }

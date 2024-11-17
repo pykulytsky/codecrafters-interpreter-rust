@@ -75,6 +75,18 @@ pub enum EvaluationValue {
     Void,
 }
 
+impl EvaluationValue {
+    pub fn to_expr(&self) -> Expr {
+        match self {
+            EvaluationValue::Nil => Expr::NIL,
+            EvaluationValue::Number(n) => Expr::Literal(LiteralType::Number(*n)),
+            EvaluationValue::Str(s) => Expr::Literal(LiteralType::Str(s.to_owned())),
+            EvaluationValue::Logical(l) => Expr::Literal(LiteralType::Logical(*l)),
+            EvaluationValue::Void => todo!(),
+        }
+    }
+}
+
 impl std::fmt::Debug for EvaluationValue {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {

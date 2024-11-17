@@ -15,6 +15,9 @@ pub enum ParserError {
 
     #[error("[line {_0}] Error: Unexpected token")]
     UnexpectedToken(usize),
+
+    #[error("Undefined variable '{0}'.")]
+    UndefinedVariable(String),
 }
 
 pub type ParserResult<T> = std::result::Result<T, ParserError>;

@@ -39,9 +39,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         Commands::Evaluate { filename } => {
             let lexer = Lexer::new(&filename).await?;
             let mut parser = Parser::new(lexer);
-            for stmt in parser.by_ref() {
+            loop {
+                let Some(stmt) = parser.next() else {
+                    break;
+                };
                 if let Stmt::Expr(expr) = stmt {
-                    match expr.evaluate() {
+                    match expr.evaluate(&parser.global_variables) {
                         Ok(res) => {
                             println!("{:?}", res);
                         }
@@ -59,14 +62,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         Commands::Run { filename } => {
             let lexer = Lexer::new(&filename).await?;
             let mut parser = Parser::new(lexer);
-            for stmt in parser.by_ref() {
-                match stmt.run() {
-                    Ok(_) => {}
-                    Err(err) => {
-                        eprintln!("{}", err);
-                        exit(70);
+            loop {
+                let Some(stmt) = parser.next() else {
+                    break;
+                };
+                    match stmt.run(&parser.global_variables) {
+                        Ok(_) => {}
+                        Err(err) => {
+                            eprintln!("{}", err);
+                            exit(70);
+                        }
                     }
-                }
             }
 
             if parser.result.is_err() {

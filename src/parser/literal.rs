@@ -1,3 +1,4 @@
+#[derive(Clone)]
 pub enum Literal {
     Str(String),
     Number(f64),

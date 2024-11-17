@@ -1,10 +1,14 @@
-use std::ops::Deref;
+use std::{collections::BTreeMap, ops::Deref};
 
 use crate::parser::{
     error::{EvaluationError, EvaluationResult},
     Literal as LiteralType,
 };
 
+#[derive(Debug, Clone, PartialEq, PartialOrd, Ord, Eq)]
+pub struct Ident(pub String);
+
+#[derive(Clone)]
 pub enum Expr {
     Literal(LiteralType),
     Unary(UnaryKind, Box<Expr>),
@@ -14,8 +18,10 @@ pub enum Expr {
         right: Box<Expr>,
     },
     Group(Vec<Expr>),
+    Ident(Ident),
 }
 
+#[derive(Clone)]
 pub enum UnaryKind {
     Negation,
     LogicalNot,
@@ -30,6 +36,7 @@ impl std::fmt::Debug for UnaryKind {
     }
 }
 
+#[derive(Clone)]
 pub enum BinaryKind {
     Addition,
     Subtraction,
@@ -83,7 +90,10 @@ impl std::fmt::Debug for EvaluationValue {
 impl Expr {
     pub const NIL: Self = Self::Literal(LiteralType::Nil);
 
-    pub fn evaluate(&self) -> EvaluationResult<EvaluationValue> {
+    pub fn evaluate(
+        &self,
+        global_variables: &BTreeMap<Ident, Expr>,
+    ) -> EvaluationResult<EvaluationValue> {
         match self {
             Expr::Literal(literal) => match literal {
                 LiteralType::Str(s) => Ok(EvaluationValue::Str(s.to_string())),
@@ -92,7 +102,7 @@ impl Expr {
                 LiteralType::Nil => Ok(EvaluationValue::Nil),
             },
             Expr::Unary(unary_kind, expr) => {
-                let value = expr.evaluate()?;
+                let value = expr.evaluate(global_variables)?;
                 match (unary_kind, value) {
                     (UnaryKind::Negation, EvaluationValue::Nil) => todo!(),
                     (_, EvaluationValue::Void) => todo!(),
@@ -113,8 +123,8 @@ impl Expr {
                 }
             }
             Expr::Binary { op, left, right } => {
-                let left = left.evaluate()?;
-                let right = right.evaluate()?;
+                let left = left.evaluate(global_variables)?;
+                let right = right.evaluate(global_variables)?;
                 match (op, left, right) {
                     (
                         BinaryKind::Multiplication,
@@ -198,7 +208,13 @@ impl Expr {
                     _ => Err(EvaluationError::OperandsMustBeNumber(1)),
                 }
             }
-            Expr::Group(group) => group[0].evaluate(),
+            Expr::Group(group) => group[0].evaluate(global_variables),
+            Expr::Ident(ident) => {
+                let Some(expr) = global_variables.get(ident) else {
+                    return Err(EvaluationError::MustBeNumber(1)); // TODO: add propper error
+                };
+                expr.evaluate(global_variables)
+            }
         }
     }
 }
@@ -217,6 +233,7 @@ impl std::fmt::Debug for Expr {
             }
             Self::Unary(kind, operand) => write!(f, "({:?} {:?})", kind, operand),
             Self::Binary { op, left, right } => write!(f, "({:?} {:?} {:?})", op, left, right),
+            Self::Ident(ident) => write!(f, "{}", ident.0),
         }
     }
 }

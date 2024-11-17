@@ -6,7 +6,7 @@ use crate::{
     lexer::{Lexer, LexerResult, Token, TokenKind, RESERVED_WORDS},
     parser::{
         error::{EvaluationResult, ParserError, ParserResult},
-        expr::{BinaryKind, EvaluationValue, UnaryKind},
+        expr::{BinaryKind, EvaluationValue, Ident, UnaryKind},
     },
 };
 pub use expr::Expr;
@@ -24,7 +24,7 @@ pub struct Parser {
     cursor: usize,
     current_precedence: u8,
     pub result: ParserResult<()>,
-    global_variables: BTreeMap<Token, EvaluationValue>,
+    pub global_variables: BTreeMap<Ident, Expr>,
 }
 
 fn is_binary_op(kind: TokenKind) -> bool {
@@ -91,17 +91,21 @@ impl Parser {
         }
     }
 
-    fn expect_var_stmt(&mut self) -> Option<Stmt> {
+    fn expect_assignment_stmt(&mut self, ident: Ident) -> Option<Stmt> {
         match self.parse_expression(0) {
-            Some(expr) => Some(Stmt::Print(expr)),
+            Some(expr) => {
+                self.global_variables.insert(ident.clone(), expr.clone());
+                Some(Stmt::Assignment(ident, expr))
+            }
             None => self.expect_expression_err(),
         }
     }
 
-    fn parse_ident(&mut self) -> Option<Token> {
+    fn parse_ident(&mut self) -> Option<Ident> {
         let next_token = self.peek_token()?;
+        self.advance();
         match next_token.kind {
-            TokenKind::Identifier => Some(next_token),
+            TokenKind::Identifier => Some(Ident(next_token.lexeme.to_string())),
             _ => None,
         }
     }
@@ -115,12 +119,10 @@ impl Parser {
             }
             TokenKind::VAR => {
                 self.advance();
-                let ident = self.parse_ident();
+                let ident = self.parse_ident()?;
                 self.advance(); // TODO: check if it is equal
 
-                let assignment = self.expect_var_stmt();
-
-                todo!()
+                self.expect_assignment_stmt(ident)
             }
             _ => Some(Stmt::Expr(self.parse_expression(0)?)),
         };
@@ -228,12 +230,27 @@ impl Parser {
             }
             TokenKind::Eof => None,
             TokenKind::RightParen => None,
+            TokenKind::Identifier => Some(Expr::Ident(Ident(token.lexeme.to_string()))),
             t => {
                 dbg!(t);
                 eprintln!("[line 1] Error: Unexpected token");
                 self.result = Err(ParserError::UnexpectedToken(1));
                 None
             } // t => unimplemented!("{:?}", t),
+        }
+    }
+
+    pub fn run(&self, stmt: Stmt) -> EvaluationResult<EvaluationValue> {
+        match stmt {
+            Stmt::Expr(expr) => {
+                let evaluation_result = expr.evaluate(&self.global_variables)?;
+                Ok(EvaluationValue::Void)
+            }
+            Stmt::Print(expr) => {
+                println!("{:?}", expr.evaluate(&self.global_variables)?);
+                Ok(EvaluationValue::Void)
+            }
+            Stmt::Assignment(_left, _right) => Ok(EvaluationValue::Void),
         }
     }
 }

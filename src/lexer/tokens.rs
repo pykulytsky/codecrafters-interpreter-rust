@@ -5,7 +5,7 @@ pub const RESERVED_WORDS: &[&str] = &[
     "this", "true", "var", "while",
 ];
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq, PartialOrd, Eq, Ord)]
 pub struct Token {
     pub kind: TokenKind,
     pub lexeme: String,
@@ -134,7 +134,7 @@ impl std::fmt::Debug for Token {
     }
 }
 #[allow(clippy::upper_case_acronyms)]
-#[derive(Clone, Copy, PartialEq)]
+#[derive(Clone, Copy, PartialEq, PartialOrd, Eq, Ord)]
 pub enum TokenKind {
     LeftParen,
     RightParen,

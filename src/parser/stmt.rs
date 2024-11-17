@@ -1,22 +1,35 @@
-use crate::parser::{error::EvaluationResult, expr::EvaluationValue, Expr};
+use std::collections::BTreeMap;
+
+use crate::{
+    lexer::Token,
+    parser::{
+        error::EvaluationResult,
+        expr::{EvaluationValue, Ident},
+        Expr,
+    },
+};
 
 pub enum Stmt {
     Expr(Expr),
     Print(Expr),
-    // Assignment(Expr, Expr),
+    Assignment(Ident, Expr),
 }
 
 impl Stmt {
-    pub fn run(&self) -> EvaluationResult<EvaluationValue> {
+    pub fn run(
+        &self,
+        global_variables: &BTreeMap<Ident, Expr>,
+    ) -> EvaluationResult<EvaluationValue> {
         match self {
             Stmt::Expr(expr) => {
-                let evaluation_result = expr.evaluate()?;
+                let evaluation_result = expr.evaluate(global_variables)?;
                 Ok(EvaluationValue::Void)
             }
             Stmt::Print(expr) => {
-                println!("{:?}", expr.evaluate()?);
+                println!("{:?}", expr.evaluate(global_variables)?);
                 Ok(EvaluationValue::Void)
             }
+            Stmt::Assignment(_left, _right) => Ok(EvaluationValue::Void),
         }
     }
 }
@@ -26,7 +39,7 @@ impl std::fmt::Debug for Stmt {
         match self {
             Stmt::Expr(expr) => expr.fmt(f),
             Stmt::Print(expr) => write!(f, "print {:?};", expr),
-            // Stmt::Assignment(left, right) => write!(f, "var {:?} = {:?};", left, right),
+            Stmt::Assignment(left, right) => write!(f, "var {:?} = {:?};", left.0, right),
         }
     }
 }

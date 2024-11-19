@@ -5,7 +5,7 @@ use std::collections::BTreeMap;
 use crate::{
     lexer::{Lexer, LexerResult, Token, TokenKind, RESERVED_WORDS},
     parser::{
-        error::{EvaluationResult, ParserError, ParserResult},
+        error::{EvaluationError, EvaluationResult, ParserError, ParserResult},
         expr::{BinaryKind, EvaluationValue, Ident, UnaryKind},
     },
 };
@@ -81,11 +81,13 @@ impl Parser {
             line: 1,
             lexeme: "print".to_string(),
         });
+        // self.result = Err(ParserError::UndefinedVariable("test".to_string()));
         None
     }
 
     fn expect_print_stmt(&mut self) -> Option<Stmt> {
-        match self.parse_expression(0) {
+        let expr = self.parse_expression(0);
+        match expr {
             Some(expr) => Some(Stmt::Print(expr)),
             None => self.expect_expression_err(),
         }
@@ -94,20 +96,20 @@ impl Parser {
     fn expect_assignment_stmt(&mut self, ident: Ident) -> Option<Stmt> {
         match self.parse_expression(0) {
             Some(expr) => {
-                let assignment_expr = if let Expr::Ident(ref id) = expr {
-                    if !self.global_variables.contains_key(id) {
-                        self.result = Err(ParserError::UndefinedVariable(id.0.to_owned()));
-                        return None;
-                    }
-                    expr.evaluate(&self.global_variables).ok()?.to_expr()
-                } else {
-                    expr
-                };
+                let ass_expr = expr.evaluate(&mut self.global_variables);
+                if let Err(EvaluationError::UndefinedVariable(var)) = ass_expr {
+                    self.result = Err(ParserError::UndefinedVariable(var));
+                    return None;
+                }
+                let ass_expr = ass_expr.ok()?.to_expr();
                 self.global_variables
-                    .insert(ident.clone(), assignment_expr.clone());
-                Some(Stmt::Assignment(ident, assignment_expr))
+                    .insert(ident.to_owned(), ass_expr.clone());
+                // self.global_variables
+                //     .insert(ident.clone(), assignment_expr.clone());
+                Some(Stmt::Declaration(ident, ass_expr))
             }
-            None => self.expect_expression_err(),
+            None => {self.result = Err(ParserError::UndefinedVariable("test".to_string()));
+                        None},
         }
     }
 
@@ -137,9 +139,22 @@ impl Parser {
                     }
                     TokenKind::Semicolon => {
                         self.global_variables.insert(ident.clone(), Expr::NIL);
-                        Some(Stmt::Assignment(ident, Expr::NIL))
+                        Some(Stmt::Declaration(ident, Expr::NIL))
                     }
                     _ => unreachable!("Handle errors"),
+                }
+            }
+            TokenKind::Identifier => {
+                let ident = self.parse_ident()?;
+                match self.peek_token()?.kind {
+                    TokenKind::Equal => {
+                        self.advance();
+                        self.expect_assignment_stmt(ident)
+                    }
+                    t => {
+                        self.result = Err(ParserError::UndefinedVariable("test".to_string()));
+                        None
+                    }
                 }
             }
             _ => Some(Stmt::Expr(self.parse_expression(0)?)),
@@ -248,6 +263,20 @@ impl Parser {
             }
             TokenKind::Eof => None,
             TokenKind::RightParen => None,
+            TokenKind::Identifier if self.peek_token()?.kind == TokenKind::Equal => {
+                let ident = Ident(token.lexeme.to_string());
+                self.advance(); // Equal
+                let expr = self.parse_expression(0)?;
+
+                let ass_expr = expr.evaluate(&mut self.global_variables);
+                if let Err(EvaluationError::UndefinedVariable(var)) = ass_expr {
+                    self.result = Err(ParserError::UndefinedVariable(var));
+                    return None;
+                }
+                let ass_expr = ass_expr.ok()?.to_expr();
+                self.global_variables.insert(ident.to_owned(), ass_expr);
+                Some(Expr::Assignment(ident, Box::new(expr)))
+            }
             TokenKind::Identifier => Some(Expr::Ident(Ident(token.lexeme.to_string()))),
             t => {
                 dbg!(t);
@@ -258,17 +287,18 @@ impl Parser {
         }
     }
 
-    pub fn run(&self, stmt: Stmt) -> EvaluationResult<EvaluationValue> {
+    pub fn run(&mut self, stmt: Stmt) -> EvaluationResult<EvaluationValue> {
         match stmt {
             Stmt::Expr(expr) => {
-                let evaluation_result = expr.evaluate(&self.global_variables)?;
+                let evaluation_result = expr.evaluate(&mut self.global_variables)?;
                 Ok(EvaluationValue::Void)
             }
             Stmt::Print(expr) => {
-                println!("{:?}", expr.evaluate(&self.global_variables)?);
+                println!("{:?}", expr.evaluate(&mut self.global_variables)?);
                 Ok(EvaluationValue::Void)
             }
-            Stmt::Assignment(_left, _right) => Ok(EvaluationValue::Void),
+            Stmt::Declaration(_left, _right) => Ok(EvaluationValue::Void),
+            // Stmt::Assignment(_left, _right) => Ok(EvaluationValue::Void),
         }
     }
 }

@@ -19,6 +19,7 @@ pub enum Expr {
     },
     Group(Vec<Expr>),
     Ident(Ident),
+    Assignment(Ident, Box<Expr>),
 }
 
 #[derive(Clone)]
@@ -104,7 +105,7 @@ impl Expr {
 
     pub fn evaluate(
         &self,
-        global_variables: &BTreeMap<Ident, Expr>,
+        global_variables: &mut BTreeMap<Ident, Expr>,
     ) -> EvaluationResult<EvaluationValue> {
         match self {
             Expr::Literal(literal) => match literal {
@@ -225,7 +226,12 @@ impl Expr {
                 let Some(expr) = global_variables.get(ident) else {
                     return Err(EvaluationError::UndefinedVariable(ident.0.clone()));
                 };
+                let expr = expr.to_owned();
                 expr.evaluate(global_variables)
+            }
+            Expr::Assignment(left, right) => {
+                // global_variables.insert(left.to_owned(), *right.clone());
+                right.evaluate(global_variables)
             }
         }
     }
@@ -246,6 +252,7 @@ impl std::fmt::Debug for Expr {
             Self::Unary(kind, operand) => write!(f, "({:?} {:?})", kind, operand),
             Self::Binary { op, left, right } => write!(f, "({:?} {:?} {:?})", op, left, right),
             Self::Ident(ident) => write!(f, "{}", ident.0),
+            Self::Assignment(ident, right) => write!(f, "{} = {:?}", ident.0, right),
         }
     }
 }

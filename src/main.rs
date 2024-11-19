@@ -44,7 +44,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     break;
                 };
                 if let Stmt::Expr(expr) = stmt {
-                    match expr.evaluate(&parser.global_variables) {
+                    match expr.evaluate(&mut parser.global_variables) {
                         Ok(res) => {
                             println!("{:?}", res);
                         }
@@ -66,7 +66,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 let Some(stmt) = parser.next() else {
                     break;
                 };
-                match stmt.run(&parser.global_variables) {
+                if let Err(parser::error::ParserError::UndefinedVariable(_)) = parser.result {
+                    exit(70);
+                    break;
+                }
+                match stmt.run(&mut parser.global_variables) {
                     Ok(_) => {}
                     Err(err) => {
                         eprintln!("{}", err);

@@ -12,13 +12,13 @@ use crate::{
 pub enum Stmt {
     Expr(Expr),
     Print(Expr),
-    Assignment(Ident, Expr),
+    Declaration(Ident, Expr),
 }
 
 impl Stmt {
     pub fn run(
         &self,
-        global_variables: &BTreeMap<Ident, Expr>,
+        global_variables: &mut BTreeMap<Ident, Expr>,
     ) -> EvaluationResult<EvaluationValue> {
         match self {
             Stmt::Expr(expr) => {
@@ -29,7 +29,8 @@ impl Stmt {
                 println!("{:?}", expr.evaluate(global_variables)?);
                 Ok(EvaluationValue::Void)
             }
-            Stmt::Assignment(_left, _right) => Ok(EvaluationValue::Void),
+            Stmt::Declaration(_left, _right) => Ok(EvaluationValue::Void),
+            // Stmt::Assignment(_left, _right) => Ok(EvaluationValue::Void),
         }
     }
 }
@@ -39,7 +40,8 @@ impl std::fmt::Debug for Stmt {
         match self {
             Stmt::Expr(expr) => expr.fmt(f),
             Stmt::Print(expr) => write!(f, "print {:?};", expr),
-            Stmt::Assignment(left, right) => write!(f, "var {:?} = {:?};", left.0, right),
+            Stmt::Declaration(left, right) => write!(f, "var {:?} = {:?};", left.0, right),
+            // Stmt::Assignment(left, right) => write!(f, "{:?} = {:?};", left.0, right),
         }
     }
 }

@@ -44,7 +44,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     break;
                 };
                 if let Stmt::Expr(expr) = stmt {
-                    match expr.evaluate(&mut parser.global_variables) {
+                    match expr.evaluate(&parser.global_variables) {
                         Ok(res) => {
                             println!("{:?}", res);
                         }

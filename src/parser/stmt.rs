@@ -9,17 +9,19 @@ use crate::{
     },
 };
 
+type Scope = BTreeMap<Ident, Expr>;
+
 pub enum Stmt {
     Expr(Expr),
     Print(Expr),
     Declaration(Ident, Expr),
-    Block(Vec<Stmt>),
+    Block(Vec<Stmt>, Scope),
 }
 
 impl Stmt {
     pub fn run(
         &self,
-        global_variables: &mut BTreeMap<Ident, Expr>,
+        global_variables: &BTreeMap<Ident, Expr>,
     ) -> EvaluationResult<EvaluationValue> {
         match self {
             Stmt::Expr(expr) => {
@@ -31,9 +33,9 @@ impl Stmt {
                 Ok(EvaluationValue::Void)
             }
             Stmt::Declaration(_left, _right) => Ok(EvaluationValue::Void),
-            Stmt::Block(block) => {
+            Stmt::Block(block, scope) => {
                 for stmt in block {
-                    stmt.run(global_variables);
+                    stmt.run(scope);
                 }
                 Ok(EvaluationValue::Void)
             } // Stmt::Assignment(_left, _right) => Ok(EvaluationValue::Void),
@@ -47,7 +49,7 @@ impl std::fmt::Debug for Stmt {
             Stmt::Expr(expr) => expr.fmt(f),
             Stmt::Print(expr) => write!(f, "print {:?};", expr),
             Stmt::Declaration(left, right) => write!(f, "var {:?} = {:?};", left.0, right),
-            Stmt::Block(block) => {
+            Stmt::Block(block, _) => {
                 writeln!(f, "{{")?;
                 for stmt in block {
                     stmt.fmt(f)?;

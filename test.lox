@@ -1,8 +1,8 @@
 {
-    var hello = 88;
+    var world = "before";
     {
-        var foo = 88;
-        print foo;
+        var world = "after";
+        print world;
     }
-    print hello;
+    print world;
 }

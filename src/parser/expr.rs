@@ -105,7 +105,7 @@ impl Expr {
 
     pub fn evaluate(
         &self,
-        global_variables: &mut BTreeMap<Ident, Expr>,
+        global_variables: &BTreeMap<Ident, Expr>,
     ) -> EvaluationResult<EvaluationValue> {
         match self {
             Expr::Literal(literal) => match literal {

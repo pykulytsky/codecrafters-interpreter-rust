@@ -96,7 +96,7 @@ impl Parser {
     fn expect_assignment_stmt(&mut self, ident: Ident) -> Option<Stmt> {
         match self.parse_expression(0) {
             Some(expr) => {
-                let ass_expr = expr.evaluate(&mut self.global_variables);
+                let ass_expr = expr.evaluate(&self.global_variables);
                 if let Err(EvaluationError::UndefinedVariable(var)) = ass_expr {
                     self.result = Err(ParserError::UndefinedVariable(var));
                     return None;
@@ -173,7 +173,7 @@ impl Parser {
                     };
                     stmts.push(stmt);
                 }
-                Some(Stmt::Block(stmts))
+                Some(Stmt::Block(stmts, self.global_variables.clone()))
             }
             _ => Some(Stmt::Expr(self.parse_expression(0)?)),
         };
@@ -286,7 +286,7 @@ impl Parser {
                 self.advance(); // Equal
                 let expr = self.parse_expression(0)?;
 
-                let ass_expr = expr.evaluate(&mut self.global_variables);
+                let ass_expr = expr.evaluate(&self.global_variables);
                 if let Err(EvaluationError::UndefinedVariable(var)) = ass_expr {
                     self.result = Err(ParserError::UndefinedVariable(var));
                     return None;
@@ -308,17 +308,17 @@ impl Parser {
     pub fn run(&mut self, stmt: Stmt) -> EvaluationResult<EvaluationValue> {
         match stmt {
             Stmt::Expr(expr) => {
-                let evaluation_result = expr.evaluate(&mut self.global_variables)?;
+                let evaluation_result = expr.evaluate(&self.global_variables)?;
                 Ok(EvaluationValue::Void)
             }
             Stmt::Print(expr) => {
-                println!("{:?}", expr.evaluate(&mut self.global_variables)?);
+                println!("{:?}", expr.evaluate(&self.global_variables)?);
                 Ok(EvaluationValue::Void)
             }
             Stmt::Declaration(_left, _right) => Ok(EvaluationValue::Void),
-            Stmt::Block(block) => {
+            Stmt::Block(block, ref scope) => {
                 for stmt in block {
-                    stmt.run(&mut self.global_variables)?;
+                    stmt.run(scope)?;
                 }
                 Ok(EvaluationValue::Void)
             } // Stmt::Assignment(_left, _right) => Ok(EvaluationValue::Void),

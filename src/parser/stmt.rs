@@ -13,6 +13,7 @@ pub enum Stmt {
     Expr(Expr),
     Print(Expr),
     Declaration(Ident, Expr),
+    Block(Vec<Stmt>),
 }
 
 impl Stmt {
@@ -30,7 +31,12 @@ impl Stmt {
                 Ok(EvaluationValue::Void)
             }
             Stmt::Declaration(_left, _right) => Ok(EvaluationValue::Void),
-            // Stmt::Assignment(_left, _right) => Ok(EvaluationValue::Void),
+            Stmt::Block(block) => {
+                for stmt in block {
+                    stmt.run(global_variables);
+                }
+                Ok(EvaluationValue::Void)
+            } // Stmt::Assignment(_left, _right) => Ok(EvaluationValue::Void),
         }
     }
 }
@@ -41,7 +47,13 @@ impl std::fmt::Debug for Stmt {
             Stmt::Expr(expr) => expr.fmt(f),
             Stmt::Print(expr) => write!(f, "print {:?};", expr),
             Stmt::Declaration(left, right) => write!(f, "var {:?} = {:?};", left.0, right),
-            // Stmt::Assignment(left, right) => write!(f, "{:?} = {:?};", left.0, right),
+            Stmt::Block(block) => {
+                writeln!(f, "{{")?;
+                for stmt in block {
+                    stmt.fmt(f)?;
+                }
+                writeln!(f, "}}")
+            }
         }
     }
 }

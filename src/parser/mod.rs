@@ -108,8 +108,10 @@ impl Parser {
                 //     .insert(ident.clone(), assignment_expr.clone());
                 Some(Stmt::Declaration(ident, ass_expr))
             }
-            None => {self.result = Err(ParserError::UndefinedVariable("test".to_string()));
-                        None},
+            None => {
+                self.result = Err(ParserError::UndefinedVariable("test".to_string()));
+                None
+            }
         }
     }
 
@@ -156,6 +158,22 @@ impl Parser {
                         None
                     }
                 }
+            }
+            TokenKind::LeftBrace => {
+                self.advance();
+                let mut stmts = vec![];
+                loop {
+                    if let Some(TokenKind::RightBrace) = self.peek_token().map(|t| t.kind) {
+                        self.advance();
+                        break;
+                    }
+                    let Some(stmt) = self.parse_statement() else {
+                        self.result = Err(ParserError::UnmatchedParens(1));
+                        return None;
+                    };
+                    stmts.push(stmt);
+                }
+                Some(Stmt::Block(stmts))
             }
             _ => Some(Stmt::Expr(self.parse_expression(0)?)),
         };
@@ -298,7 +316,12 @@ impl Parser {
                 Ok(EvaluationValue::Void)
             }
             Stmt::Declaration(_left, _right) => Ok(EvaluationValue::Void),
-            // Stmt::Assignment(_left, _right) => Ok(EvaluationValue::Void),
+            Stmt::Block(block) => {
+                for stmt in block {
+                    stmt.run(&mut self.global_variables)?;
+                }
+                Ok(EvaluationValue::Void)
+            } // Stmt::Assignment(_left, _right) => Ok(EvaluationValue::Void),
         }
     }
 }

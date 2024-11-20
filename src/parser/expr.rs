@@ -1,8 +1,7 @@
 use std::{collections::BTreeMap, ops::Deref};
 
 use crate::parser::{
-    error::{EvaluationError, EvaluationResult},
-    Literal as LiteralType,
+    error::{EvaluationError, EvaluationResult}, stmt::Scope, Literal as LiteralType
 };
 
 #[derive(Debug, Clone, PartialEq, PartialOrd, Ord, Eq)]
@@ -105,7 +104,7 @@ impl Expr {
 
     pub fn evaluate(
         &self,
-        global_variables: &BTreeMap<Ident, Expr>,
+        scope: &Scope,
     ) -> EvaluationResult<EvaluationValue> {
         match self {
             Expr::Literal(literal) => match literal {
@@ -115,7 +114,7 @@ impl Expr {
                 LiteralType::Nil => Ok(EvaluationValue::Nil),
             },
             Expr::Unary(unary_kind, expr) => {
-                let value = expr.evaluate(global_variables)?;
+                let value = expr.evaluate(scope)?;
                 match (unary_kind, value) {
                     (UnaryKind::Negation, EvaluationValue::Nil) => todo!(),
                     (_, EvaluationValue::Void) => todo!(),
@@ -136,8 +135,8 @@ impl Expr {
                 }
             }
             Expr::Binary { op, left, right } => {
-                let left = left.evaluate(global_variables)?;
-                let right = right.evaluate(global_variables)?;
+                let left = left.evaluate(scope)?;
+                let right = right.evaluate(scope)?;
                 match (op, left, right) {
                     (
                         BinaryKind::Multiplication,
@@ -221,17 +220,17 @@ impl Expr {
                     _ => Err(EvaluationError::OperandsMustBeNumber(1)),
                 }
             }
-            Expr::Group(group) => group[0].evaluate(global_variables),
+            Expr::Group(group) => group[0].evaluate(scope),
             Expr::Ident(ident) => {
-                let Some(expr) = global_variables.get(ident) else {
+                let Some(expr) = scope.get(ident) else {
                     return Err(EvaluationError::UndefinedVariable(ident.0.clone()));
                 };
                 let expr = expr.to_owned();
-                expr.evaluate(global_variables)
+                expr.evaluate(scope)
             }
             Expr::Assignment(left, right) => {
                 // global_variables.insert(left.to_owned(), *right.clone());
-                right.evaluate(global_variables)
+                right.evaluate(scope)
             }
         }
     }

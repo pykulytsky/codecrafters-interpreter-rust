@@ -1,8 +1,5 @@
+var bar = "global bar";
 {
-    var world = "before";
-    {
-        var world = "after";
-        print world;
-    }
-    print world;
+bar = 2;
 }
+print bar;

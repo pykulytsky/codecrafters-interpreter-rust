@@ -9,7 +9,7 @@ use crate::{
     },
 };
 
-type Scope = BTreeMap<Ident, Expr>;
+pub type Scope = BTreeMap<Ident, Expr>;
 
 pub enum Stmt {
     Expr(Expr),
@@ -19,17 +19,14 @@ pub enum Stmt {
 }
 
 impl Stmt {
-    pub fn run(
-        &self,
-        global_variables: &BTreeMap<Ident, Expr>,
-    ) -> EvaluationResult<EvaluationValue> {
+    pub fn run(&self, scope: &Scope) -> EvaluationResult<EvaluationValue> {
         match self {
             Stmt::Expr(expr) => {
-                let evaluation_result = expr.evaluate(global_variables)?;
+                let evaluation_result = expr.evaluate(scope)?;
                 Ok(EvaluationValue::Void)
             }
             Stmt::Print(expr) => {
-                println!("{:?}", expr.evaluate(global_variables)?);
+                println!("{:?}", expr.evaluate(scope)?);
                 Ok(EvaluationValue::Void)
             }
             Stmt::Declaration(_left, _right) => Ok(EvaluationValue::Void),

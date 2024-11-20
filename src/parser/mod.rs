@@ -7,6 +7,7 @@ use crate::{
     parser::{
         error::{EvaluationError, EvaluationResult, ParserError, ParserResult},
         expr::{BinaryKind, EvaluationValue, Ident, UnaryKind},
+        stmt::Scope,
     },
 };
 pub use expr::Expr;
@@ -24,7 +25,7 @@ pub struct Parser {
     cursor: usize,
     current_precedence: u8,
     pub result: ParserResult<()>,
-    pub global_variables: BTreeMap<Ident, Expr>,
+    pub global_scope: Scope,
 }
 
 fn is_binary_op(kind: TokenKind) -> bool {
@@ -50,7 +51,7 @@ impl Parser {
             tokens,
             cursor: 0,
             current_precedence: 0,
-            global_variables: BTreeMap::new(),
+            global_scope: BTreeMap::new(),
             result: lexer_to_parser_result(lexer.result),
         }
     }
@@ -93,19 +94,42 @@ impl Parser {
         }
     }
 
-    fn expect_assignment_stmt(&mut self, ident: Ident) -> Option<Stmt> {
+    fn expect_assignment_stmt(
+        &mut self,
+        ident: Ident,
+        scope: Option<&mut Scope>,
+        outer_scope: &Option<&mut Scope>,
+        is_decl: bool,
+    ) -> Option<Stmt> {
         match self.parse_expression(0) {
             Some(expr) => {
-                let ass_expr = expr.evaluate(&self.global_variables);
+                let ass_expr = expr.evaluate(&self.global_scope);
                 if let Err(EvaluationError::UndefinedVariable(var)) = ass_expr {
                     self.result = Err(ParserError::UndefinedVariable(var));
                     return None;
                 }
                 let ass_expr = ass_expr.ok()?.to_expr();
-                self.global_variables
-                    .insert(ident.to_owned(), ass_expr.clone());
-                // self.global_variables
-                //     .insert(ident.clone(), assignment_expr.clone());
+                if is_decl {
+                    if let Some(scope) = scope {
+                        scope.insert(ident.to_owned(), ass_expr.clone());
+                    } else {
+                        self.global_scope.insert(ident.to_owned(), ass_expr.clone());
+                    }
+                } else {
+                    if let Some(scope) = scope {
+                        match scope.entry(ident.clone()) {
+                            std::collections::btree_map::Entry::Vacant(_) => {
+                                if let Some(outer_scope) = outer_scope {
+                                    outer_scope.insert(ident, ass_expr.clone());
+                                }
+                            }
+                            std::collections::btree_map::Entry::Occupied(mut occupied_entry) => {
+                                occupied_entry.insert(ass_expr.clone());
+                            }
+                        }
+                    }
+                    todo!()
+                }
                 Some(Stmt::Declaration(ident, ass_expr))
             }
             None => {
@@ -124,7 +148,11 @@ impl Parser {
         }
     }
 
-    pub fn parse_statement(&mut self) -> Option<Stmt> {
+    pub fn parse_statement(
+        &mut self,
+        scope: Option<&mut Scope>,
+        outer_scope: &Option<&mut Scope>,
+    ) -> Option<Stmt> {
         let token = self.peek_token()?;
         let stmt = match token.kind {
             TokenKind::PRINT => {
@@ -137,10 +165,14 @@ impl Parser {
                 match self.peek_token()?.kind {
                     TokenKind::Equal => {
                         self.advance();
-                        self.expect_assignment_stmt(ident)
+                        self.expect_assignment_stmt(ident, scope, outer_scope, true)
                     }
                     TokenKind::Semicolon => {
-                        self.global_variables.insert(ident.clone(), Expr::NIL);
+                        if let Some(scope) = scope {
+                            scope.insert(ident.clone(), Expr::NIL);
+                        } else {
+                            self.global_scope.insert(ident.clone(), Expr::NIL);
+                        }
                         Some(Stmt::Declaration(ident, Expr::NIL))
                     }
                     _ => unreachable!("Handle errors"),
@@ -151,7 +183,8 @@ impl Parser {
                 match self.peek_token()?.kind {
                     TokenKind::Equal => {
                         self.advance();
-                        self.expect_assignment_stmt(ident)
+                        self.expect_assignment_stmt(ident, scope, &None, false)
+                        // self.global_scope.insert(ident.to_owned(), ass_expr);
                     }
                     t => {
                         self.result = Err(ParserError::UndefinedVariable("test".to_string()));
@@ -162,18 +195,23 @@ impl Parser {
             TokenKind::LeftBrace => {
                 self.advance();
                 let mut stmts = vec![];
+                let mut inner_scope = match scope {
+                    Some(outer_scope) => outer_scope.clone(),
+                    None => self.global_scope.clone(),
+                };
                 loop {
                     if let Some(TokenKind::RightBrace) = self.peek_token().map(|t| t.kind) {
                         self.advance();
                         break;
                     }
-                    let Some(stmt) = self.parse_statement() else {
+                    let Some(stmt) = self.parse_statement(Some(&mut inner_scope), outer_scope)
+                    else {
                         self.result = Err(ParserError::UnmatchedParens(1));
                         return None;
                     };
                     stmts.push(stmt);
                 }
-                Some(Stmt::Block(stmts, self.global_variables.clone()))
+                Some(Stmt::Block(stmts, inner_scope))
             }
             _ => Some(Stmt::Expr(self.parse_expression(0)?)),
         };
@@ -286,13 +324,13 @@ impl Parser {
                 self.advance(); // Equal
                 let expr = self.parse_expression(0)?;
 
-                let ass_expr = expr.evaluate(&self.global_variables);
+                let ass_expr = expr.evaluate(&self.global_scope);
                 if let Err(EvaluationError::UndefinedVariable(var)) = ass_expr {
                     self.result = Err(ParserError::UndefinedVariable(var));
                     return None;
                 }
                 let ass_expr = ass_expr.ok()?.to_expr();
-                self.global_variables.insert(ident.to_owned(), ass_expr);
+                // self.global_scope.insert(ident.to_owned(), ass_expr);
                 Some(Expr::Assignment(ident, Box::new(expr)))
             }
             TokenKind::Identifier => Some(Expr::Ident(Ident(token.lexeme.to_string()))),
@@ -308,11 +346,11 @@ impl Parser {
     pub fn run(&mut self, stmt: Stmt) -> EvaluationResult<EvaluationValue> {
         match stmt {
             Stmt::Expr(expr) => {
-                let evaluation_result = expr.evaluate(&self.global_variables)?;
+                let evaluation_result = expr.evaluate(&self.global_scope)?;
                 Ok(EvaluationValue::Void)
             }
             Stmt::Print(expr) => {
-                println!("{:?}", expr.evaluate(&self.global_variables)?);
+                println!("{:?}", expr.evaluate(&self.global_scope)?);
                 Ok(EvaluationValue::Void)
             }
             Stmt::Declaration(_left, _right) => Ok(EvaluationValue::Void),
@@ -334,6 +372,6 @@ impl Iterator for Parser {
     type Item = Stmt;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.parse_statement()
+        self.parse_statement(None, &None)
     }
 }

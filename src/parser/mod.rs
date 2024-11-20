@@ -98,7 +98,7 @@ impl Parser {
         &mut self,
         ident: Ident,
         scope: Option<&mut Scope>,
-        outer_scope: &Option<&mut Scope>,
+        outer_scope: &mut Option<&mut Scope>,
         is_decl: bool,
     ) -> Option<Stmt> {
         match self.parse_expression(0) {
@@ -115,20 +115,17 @@ impl Parser {
                     } else {
                         self.global_scope.insert(ident.to_owned(), ass_expr.clone());
                     }
-                } else {
-                    if let Some(scope) = scope {
-                        match scope.entry(ident.clone()) {
-                            std::collections::btree_map::Entry::Vacant(_) => {
-                                if let Some(outer_scope) = outer_scope {
-                                    outer_scope.insert(ident, ass_expr.clone());
-                                }
-                            }
-                            std::collections::btree_map::Entry::Occupied(mut occupied_entry) => {
-                                occupied_entry.insert(ass_expr.clone());
+                } else if let Some(scope) = scope {
+                    match scope.entry(ident.clone()) {
+                        std::collections::btree_map::Entry::Vacant(_) => {
+                            if let Some(outer_scope) = outer_scope {
+                                outer_scope.insert(ident.clone(), ass_expr.clone());
                             }
                         }
+                        std::collections::btree_map::Entry::Occupied(mut occupied_entry) => {
+                            occupied_entry.insert(ass_expr.clone());
+                        }
                     }
-                    todo!()
                 }
                 Some(Stmt::Declaration(ident, ass_expr))
             }
@@ -151,7 +148,7 @@ impl Parser {
     pub fn parse_statement(
         &mut self,
         scope: Option<&mut Scope>,
-        outer_scope: &Option<&mut Scope>,
+        outer_scope: &mut Option<&mut Scope>,
     ) -> Option<Stmt> {
         let token = self.peek_token()?;
         let stmt = match token.kind {
@@ -183,7 +180,7 @@ impl Parser {
                 match self.peek_token()?.kind {
                     TokenKind::Equal => {
                         self.advance();
-                        self.expect_assignment_stmt(ident, scope, &None, false)
+                        self.expect_assignment_stmt(ident, scope, &mut None, false)
                         // self.global_scope.insert(ident.to_owned(), ass_expr);
                     }
                     t => {
@@ -372,6 +369,6 @@ impl Iterator for Parser {
     type Item = Stmt;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.parse_statement(None, &None)
+        self.parse_statement(None, &mut None)
     }
 }

@@ -1,5 +1,9 @@
-var bar = "global bar";
 {
-bar = 2;
+  var hello = "outer hello";
+  {
+    var hello = "inner hello";
+    print hello;
+  }
+  print hello;
 }
-print bar;
+print hello;
